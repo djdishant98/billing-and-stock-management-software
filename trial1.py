@@ -1,6 +1,8 @@
 from PyQt5.QtCore import Qt ,QAbstractTableModel
 from PyQt5.QtGui import QStandardItemModel , QStandardItem
 from PyQt5.QtWidgets import QTableView ,QMainWindow ,QWidget , QApplication
+import os
+from pathlib import Path
 
 """class TableModal(QAbstractTableModel):
     def __init__(self,data):
@@ -54,4 +56,5 @@ if __name__ == '__main__':
     app =QApplication([])
     m = Main()
     m.show()
+    print(Path.cwd())
     app.exec_()
