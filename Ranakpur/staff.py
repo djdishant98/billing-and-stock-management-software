@@ -20,6 +20,7 @@ from PyQt5.QtGui import (QFont,
                          QStandardItem,
                          QBrush,
                          QColor)
+from Stock.stock import Bill
 import re , sqlite3 , os
 from datetime import date , datetime
 from pathlib import Path
@@ -410,6 +411,7 @@ class Pilot(QMainWindow):
         item3 = self.product_weight.text()
         item4 = self.product_quantity.text()
         item5 = self.m_c.currentText()
+        b_obj = self.bill
 
         if  not item1 or not item2 or not item3 or not item4:
 
@@ -437,6 +439,23 @@ class Pilot(QMainWindow):
                 i_6.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 i_6.setBackground(QBrush(QColor('lightblue')))
                 self.model.setItem(self.row,5,i_6)
+                r = b_obj.search_fields(item1,item2)
+                if r:
+                     v1 = b_obj.m.index(r,3).data()
+                     v2 = b_obj.m.index(r,4).data()
+                     v1 = v1 - float(item3)
+                     v2 = v2 - int(item4)
+                     b_obj.m.setData(b_obj.m.index(r,3),v1)
+                     b_obj.m.setData(b_obj.m.index(r,4),v2)
+                     b_obj.m.submitAll()
+                     b_obj.m.select()
+                else:
+                    msg = QMessageBox(self)
+                    msg.setWindowTitle("Missing row in database")
+                    msg.setIcon(QMessageBox.Warning)
+                    msg.setText("The product or carat is not available in Datatabase")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.exec_()
 
             else :
 
@@ -466,7 +485,10 @@ class Pilot(QMainWindow):
                     item7 = (float(item3) * int(m_c)) * int(item4)
                     i_6 = QStandardItem(str(m_c))
 
-                self.model.setItem(self.row,1,QStandardItem(''))
+                i_2 = QStandardItem(item1[-3:])
+                i_2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                i_2.setBackground(QBrush(QColor("lightblue")))
+                self.model.setItem(self.row,1,i_2)
                 i_6.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 i_6.setBackground(QBrush(QColor('lightblue')))
                 self.model.setItem(self.row,5,i_6)
@@ -475,10 +497,6 @@ class Pilot(QMainWindow):
             i_1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             i_1.setBackground(QBrush(QColor("lightblue")))
             self.model.setItem(self.row,0,i_1)
-            i_2 = QStandardItem(item1[-3:])
-            i_2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            i_2.setBackground(QBrush(QColor("lightblue")))
-            self.model.setItem(self.row,1,i_2)
             i_3 = QStandardItem(item3)
             i_3.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             i_3.setBackground(QBrush(QColor("lightblue")))

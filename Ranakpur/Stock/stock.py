@@ -231,6 +231,17 @@ class Bill(QMainWindow):
     def d_function(self):
         pass
 
+#------------------------function to search in model for stock update during bill print function---------------------------
+
+    def search_fields(self,product,carat):
+
+        for r in range(self.m.rowCount()):
+            data1 = self.m.index(r,1).data()
+            data2 = self.m.index(r,2).data()
+            if product == data1 and carat == data2:
+                return r
+        return False  
+
 #--------------------------------function to reset the fields-------------------
 
     def r_function(self):
@@ -261,8 +272,12 @@ class Bill(QMainWindow):
 
     def init_db(self):
 
-        db = QSqlDatabase.addDatabase('QSQLITE')
-        db.setDatabaseName('Stock_database.db')
+        if QSqlDatabase.contains("qt_sql_default_connection"):
+            # Re-use the existing active database connection pointer safely
+            db = QSqlDatabase.database("qt_sql_default_connection")
+        else:
+            db = QSqlDatabase.addDatabase('QSQLITE')
+            db.setDatabaseName('Stock_database.db')
         if not db.open():
             QMessageBox.critical(self,db.lastError().text())
             return False
@@ -306,7 +321,7 @@ class AlignedItem(QStyledItemDelegate):
         super().__init__()
         self.alignment = alignment
 
-    def initStyleOption(self, option, index):                            #Override existing initStyleOption method
+    def initStyleOption(self, option, index):                            #Override exsisting initStyleOption method
         super().initStyleOption(option, index)
         # Override the default text alignment for this cell/column
         option.displayAlignment = self.alignment

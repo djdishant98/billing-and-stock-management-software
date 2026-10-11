@@ -127,6 +127,16 @@ class User(QMainWindow):
                 msg.setStandardButtons(QMessageBox.Ok)
                 msg.setText('Success')
                 msg.exec_()
+
+            else:
+
+                msg  = QMessageBox(self)
+                msg.setWindowTitle('Credentials')
+                msg.setIcon(QMessageBox.Warning)
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.setText('Enter correct details')
+                msg.exec_()
+
                 
 
 if __name__ == '__main__':
