@@ -231,17 +231,6 @@ class Bill(QMainWindow):
     def d_function(self):
         pass
 
-#------------------------function to search in model for stock update during bill print function---------------------------
-
-    def search_fields(self,product,carat):
-
-        for r in range(self.m.rowCount()):
-            data1 = self.m.index(r,1).data()
-            data2 = self.m.index(r,2).data()
-            if product == data1 and carat == data2:
-                return r
-        return False  
-
 #--------------------------------function to reset the fields-------------------
 
     def r_function(self):

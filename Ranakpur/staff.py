@@ -14,13 +14,15 @@ from PyQt5.QtWidgets import (QApplication,
                              QTableView,
                              QMessageBox,
                              QRadioButton,
-                             QHeaderView)
+                             QHeaderView,
+                             )
 from PyQt5.QtGui import (QFont,
                          QStandardItemModel, 
                          QStandardItem,
                          QBrush,
                          QColor)
-from Stock.stock import Bill
+from PyQt5.QtSql import QSqlTableModel , QSqlQuery , QSqlDatabase
+#from Stock.stock import Bill
 import re , sqlite3 , os
 from datetime import date , datetime
 from pathlib import Path
@@ -43,6 +45,7 @@ from pathlib import Path
 class Pilot(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.init_background_db()
         self.gold_list =["Necklace",
                        "Gents Ring",
                        "Ladies Ring",
@@ -287,6 +290,26 @@ class Pilot(QMainWindow):
         self.setCentralWidget(self.container_widget)
         self.showMaximized()
 
+    #----------------------------------creating database connection with existing table----------------
+
+    def init_background_db(self):
+        db_p= f'{Path.cwd()}/Stock/Stock_database.db'
+        current_dir = Path(__file__).resolve().parent
+        db_path = current_dir/"Stock"/"Stock_database.db"
+        if QSqlDatabase.contains("qt_sql_default_connection"):
+            # Re-use the existing active database connection pointer safely
+            db = QSqlDatabase.database("qt_sql_default_connection")
+        else:
+            db = QSqlDatabase.addDatabase('QSQLITE','qt_sql_default_connection')
+            db.setDatabaseName(str(db_path))
+        if not db.open():
+            QMessageBox.critical(self,db.lastError().text())
+            return False
+        else:
+            self.db_model = QSqlTableModel(self,db)
+            self.db_model.setTable('stock')
+            self.db_model.select()
+
 
         #--------------------------------Creating Bill Print layout---------------------------
     def p_widget_function(self):
@@ -401,6 +424,18 @@ class Pilot(QMainWindow):
                                 background:#0a6ba0}""" 
        c.setStyleSheet(design)
 
+#------------------------function to search in model for stock update during bill print function---------------------------
+
+    def search_fields(self,product,carat):
+
+        r=0
+        for r in range(self.db_model.rowCount()):
+            data1 = self.db_model.index(r,1).data()
+            data2 = self.db_model.index(r,2).data()
+            if product == data1 and carat == data2:
+                return r
+        return False
+
     #----------------------function to print bill----------------------
 
     def print_function(self):
@@ -411,7 +446,6 @@ class Pilot(QMainWindow):
         item3 = self.product_weight.text()
         item4 = self.product_quantity.text()
         item5 = self.m_c.currentText()
-        b_obj = self.bill
 
         if  not item1 or not item2 or not item3 or not item4:
 
@@ -439,16 +473,16 @@ class Pilot(QMainWindow):
                 i_6.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 i_6.setBackground(QBrush(QColor('lightblue')))
                 self.model.setItem(self.row,5,i_6)
-                r = b_obj.search_fields(item1,item2)
+                r=self.search_fields(item1,item2)
                 if r:
-                     v1 = b_obj.m.index(r,3).data()
-                     v2 = b_obj.m.index(r,4).data()
+                     v1 = self.db_model.index(r,3).data()
+                     v2 = self.db_model.index(r,4).data()
                      v1 = v1 - float(item3)
                      v2 = v2 - int(item4)
-                     b_obj.m.setData(b_obj.m.index(r,3),v1)
-                     b_obj.m.setData(b_obj.m.index(r,4),v2)
-                     b_obj.m.submitAll()
-                     b_obj.m.select()
+                     self.db_model.setData(self.db_model.index(r,3),v1)
+                     self.db_model.setData(self.db_model.index(r,4),v2)
+                     self.db_model.submitAll()
+                     self.db_model.select()
                 else:
                     msg = QMessageBox(self)
                     msg.setWindowTitle("Missing row in database")
@@ -486,14 +520,14 @@ class Pilot(QMainWindow):
                     i_6 = QStandardItem(str(m_c))
 
                 i_2 = QStandardItem(item1[-3:])
-                i_2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                i_2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)     #item2 and item6 are changed according to gold and silver
                 i_2.setBackground(QBrush(QColor("lightblue")))
                 self.model.setItem(self.row,1,i_2)
                 i_6.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 i_6.setBackground(QBrush(QColor('lightblue')))
                 self.model.setItem(self.row,5,i_6)
 
-            i_1 = QStandardItem(item1)                        #item2 and item6 are changed according to gold and silver
+            i_1 = QStandardItem(item1)                        
             i_1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             i_1.setBackground(QBrush(QColor("lightblue")))
             self.model.setItem(self.row,0,i_1)
