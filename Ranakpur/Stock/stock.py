@@ -20,37 +20,24 @@ from PyQt5.QtWidgets import (QTableView,
                               QAbstractItemView)
 
 from datetime import datetime , date
+import json , os
+from pathlib import Path
 
 class Bill(QMainWindow):
     def __init__(self):
         super().__init__()
-        p_list =["Necklace",
-                "Gents Ring",
-                "Ladies Ring",
-                "Ganthan",
-                "Vati",
-                "Mani",
-                "Pendal",
-                "Machine chain",
-                "Hollow chain",
-                "Tops",
-                "Earings",
-                "Disco bali",
-                "Kudka",
-                "Kanchain",
-                "Jhumka",
-                "Nosepin",
-                "Thushi",
-                "Sarmani mala",
-                "Chain pendent",
-                "Bugdi",
-                "Basket bali"]
-
-        c_list=["22k",
-                 "20k",
-                 "18k",
-                 "65"]
-
+        cur_dict = Path(__file__).resolve().parent.parent
+        config_path = cur_dict/"Data"/"config.json"
+        if config_path.exists():
+            try:
+                with open(str(config_path),'r') as file:
+                    data = json.load(file)
+                    p_list = data.get("Gold_List")
+                    c_list = data.get("Carat")
+            except Exception as e:
+                print(e)
+        else:
+            data={}
         #---------------------setting widgets------------------------
         container = QWidget()
         self.p_l = QLabel('Product')

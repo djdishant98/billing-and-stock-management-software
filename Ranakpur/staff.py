@@ -23,6 +23,7 @@ from PyQt5.QtGui import (QFont,
                          QColor)
 from PyQt5.QtSql import QSqlTableModel , QSqlQuery , QSqlDatabase
 #from Stock.stock import Bill
+import json
 import re , sqlite3 , os
 from datetime import date , datetime
 from pathlib import Path
@@ -46,61 +47,26 @@ class Pilot(QMainWindow):
     def __init__(self):
         super().__init__()
         self.init_background_db()
-        self.gold_list =["Necklace",
-                       "Gents Ring",
-                       "Ladies Ring",
-                       "Ganthan",
-                       "Vati",
-                       "Mani",
-                       "Pendal",
-                       "Machine chain",
-                       "Hollow chain",
-                       "Tops",
-                       "Earings",
-                       "Disco bali",
-                       "Kudka",
-                       "Kanchain",
-                       "Jhumka",
-                       "Nosepin",
-                       "Thushi",
-                       "Sarmani mala",
-                       "Chain pendent",
-                       "Bugdi",
-                       "Basket bali",]
+        cur_dict = Path(__file__).resolve().parent
+        config_path = cur_dict/"Data"/"config.json"
+        if not config_path.exists():
+            data ={}
+        else:
+            try:
+                with open(str(config_path),'r') as file:
+                    data = json.load(file)
+                    self.gold_list = data.get("Gold_List")
+                    self.silver_list = data.get("Silver_List")
+                    carat = data.get("Carat")
+                    mode = data.get("Mode")
+                    self.gold_making = data.get("Gold_Making")
+                    self.silver_making = data.get("Silver_Making")
+                    self.g_rate = data.get("Gold_Rate")
+                    self.s_rate = data.get("Silver_Rate")
 
-        self.silver_list = ['Payal 50',
-                  'Payal 70',
-                  'Bracelet 70',
-                  'Bracelete 95',
-                  'Jodva 60',
-                  'Jodva 80',
-                  'Jodva 95',
-                  'Ring 925',
-                  'Ring 70',
-                  'Ring 95',
-                  ]
-        
-        carat = ["22k",
-                 "20k",
-                 "18k",
-                 "65"]
-
-        mode = ["Cash",
-                "RTGS/NEFT",
-                "UPI"]
-
-        self.gold_making = ["15%",
-                  "12%",
-                  "10%",
-                  "5%",
-                  "500"]
-
-        self.silver_making =['30%',
-                        '450G',
-                        '550G',
-                        '200B',
-                        '350P']
-
+            except json.JSONDecodeError:
+                print("Json file is corrupted")
+                return False
         self.orna =''
 
 
@@ -154,7 +120,7 @@ class Pilot(QMainWindow):
         self.payment_mode.addItems(mode)
         self.payment_mode.setEditable(True)
         self.rate_label = QLabel('Rate')
-        self.rate = QLabel('14000')
+        self.rate = QLabel(self.g_rate)
         self.m_c_label = QLabel('Making Charge')
         self.m_c = QComboBox()
         self.m_c.setEditable(True)
@@ -636,7 +602,7 @@ class Pilot(QMainWindow):
             if text == 'GOLD':
                 self.product_list.addItems(self.gold_list)
                 self.m_c.addItems(self.gold_making)
-                self.rate.setText('14000')
+                self.rate.setText(self.g_rate)
                 self.product_carat.setVisible(True)
                 self.product_carat_label.setVisible(True)
             else:
@@ -645,7 +611,7 @@ class Pilot(QMainWindow):
                 self.product_carat_label.setVisible(False)
                 self.product_carat.hide()
                 #self.product_carat.setVisible(False)
-                self.rate.setText('220')
+                self.rate.setText(self.s_rate)
         self.product_list.blockSignals(False)
         self.m_c.blockSignals(False)
 
