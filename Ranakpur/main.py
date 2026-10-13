@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (QWidget,
 from PyQt5.QtCore import Qt
 from pathlib import Path
 from staff import Pilot
+from admin import Admin
 import json
 import os
 
@@ -127,6 +128,11 @@ class User(QMainWindow):
                 msg.setStandardButtons(QMessageBox.Ok)
                 msg.setText('Success')
                 msg.exec_()
+                if self.second_win is None:                           #displaying admin window
+                    self.second_win = Admin()
+                    self.hide()
+                    self.second_win.show()
+                    True
 
             else:
 

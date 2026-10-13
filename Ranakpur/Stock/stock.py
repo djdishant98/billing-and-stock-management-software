@@ -257,7 +257,6 @@ class Bill(QMainWindow):
         if not db.open():
             QMessageBox.critical(self,db.lastError().text())
             return False
-
         else:
             query = QSqlQuery()
             query.exec_("""CREATE TABLE IF NOT EXISTS stock(
