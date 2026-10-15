@@ -23,8 +23,8 @@ from datetime import datetime , date
 import json , os
 from pathlib import Path
 
-class Bill(QMainWindow):
-    def __init__(self):
+class Bill(QWidget):
+    def __init__(self,parent=None):
         super().__init__()
         cur_dict = Path(__file__).resolve().parent.parent
         config_path = cur_dict/"Data"/"config.json"
@@ -111,8 +111,7 @@ class Bill(QMainWindow):
         l.addLayout(d_l)
         l.addLayout(b_l)
         l.addWidget(self.table)
-        container.setLayout(l)
-        self.setCentralWidget(container)
+        self.setLayout(l)
         self.showMaximized()
 
 #---------------------------event listener--------------------------------
@@ -253,6 +252,7 @@ class Bill(QMainWindow):
             db = QSqlDatabase.database("qt_sql_default_connection")
         else:
             db = QSqlDatabase.addDatabase('QSQLITE')
+
             db.setDatabaseName('Stock_database.db')
         if not db.open():
             QMessageBox.critical(self,db.lastError().text())

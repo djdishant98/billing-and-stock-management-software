@@ -63,6 +63,10 @@ class Pilot(QMainWindow):
                     self.silver_making = data.get("Silver_Making")
                     self.g_rate = data.get("Gold_Rate")
                     self.s_rate = data.get("Silver_Rate")
+                    self.firm = data.get("Shop_Name")
+                    self.address = data.get("Address")
+                    self.contact = data.get("Contact")
+                    self.gst = data.get("GST")
 
             except json.JSONDecodeError:
                 print("Json file is corrupted")
@@ -130,6 +134,7 @@ class Pilot(QMainWindow):
         #self.reset_button.setContentsMargins(20,20,20,20)
         self.add_button = QPushButton("ADD")
         #self.add_button.setContentsMargins(20,20,20,20)
+        self.create_GST_button = QPushButton("Create GST")
         
         #----------------------Events---------------------------------
 
@@ -137,6 +142,7 @@ class Pilot(QMainWindow):
         #self.print_button.released.connect(self.clear_field_function)
         self.reset_button.clicked.connect(self.reset_function)
         self.add_button.pressed.connect(self.print_function)
+        self.create_GST_button.clicked.connect(self.create_GST_function)
         self.add_button.released.connect(self.clear_field_function)
         self.gold.toggled.connect(self.gold_silver_toggle_function)
         self.silver.toggled.connect(self.gold_silver_toggle_function)
@@ -222,6 +228,7 @@ class Pilot(QMainWindow):
         button_layout.addWidget(self.print_button)
         button_layout.addWidget(self.reset_button)
         button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.create_GST_button)
         button_layout.setContentsMargins(20,20,20,20)
         button_layout.setAlignment(Qt.AlignRight)
 
@@ -276,7 +283,6 @@ class Pilot(QMainWindow):
             self.db_model.setTable('stock')
             self.db_model.select()
 
-
         #--------------------------------Creating Bill Print layout---------------------------
     def p_widget_function(self):
         self.p = QWidget()
@@ -290,12 +296,9 @@ class Pilot(QMainWindow):
         frame3.setFrameStyle(QFrame.Panel | QFrame.Plain)
         frame3.setLineWidth(2)
         self.label1 = QLabel("Ranakpur Jewellers")
-        address = 'Ganj Bazar , Saraf Bazar , Ahilyanagar , MH , 414001'
-        self.label2 = QLabel(address)
-        contact = '9552291371'
-        self.label3 = QLabel(contact)
-        GST = '27ACHPP7648A1ZH'
-        self.label4 = QLabel(GST)
+        self.label2 = QLabel(self.address)
+        self.label3 = QLabel(self.contact)
+        self.label4 = QLabel(self.gst)
         self.label5 = QLabel('GOLD/SILVER PURCHASE')
         self.label6 = QLabel('Name:')
         self.label6_1 = QLabel(self.cus_name.text())
@@ -394,7 +397,6 @@ class Pilot(QMainWindow):
 
     def search_fields(self,product,carat):
 
-        r=0
         for r in range(self.db_model.rowCount()):
             data1 = self.db_model.index(r,1).data()
             data2 = self.db_model.index(r,2).data()
@@ -402,7 +404,45 @@ class Pilot(QMainWindow):
                 return r
         return False
 
-    #----------------------function to print bill----------------------
+    #----------------------function to create GST bill--------------------------------
+
+    def create_GST_function(self):
+        sgst = 0
+        cgst = 0
+        gst = 0
+        gt = 0
+        row = self.model.rowCount()
+        if row is None:
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("Null Entries")
+            msg.setText("Nothing to calculate")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec_()
+        else:
+            tt = self.model.data(self.model.index(10,6))
+            sgst = (float(tt) * 1.5)/100 
+            cgst = sgst
+            gst = cgst + sgst
+            gt = float(tt) + gst
+            item8 = QStandardItem(str(sgst))
+            item8.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item9 = QStandardItem(str(cgst))
+            item9.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item10 = QStandardItem(str(gst))
+            item10.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item11 = QStandardItem(str(gt))
+            item11.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.model.setItem(11,5,QStandardItem('SGST'))
+            self.model.setItem(12,5,QStandardItem('CGST'))
+            self.model.setItem(13,5,QStandardItem('GST'))
+            self.model.setItem(14,5,QStandardItem('Grand Total'))
+            self.model.setItem(11,6,item8)
+            self.model.setItem(12,6,item9)
+            self.model.setItem(13,6,item10)
+            self.model.setItem(14,6,item11)
+
+    #----------------------function to print bill-------------------------------------
 
     def print_function(self):
 
@@ -440,7 +480,7 @@ class Pilot(QMainWindow):
                 i_6.setBackground(QBrush(QColor('lightblue')))
                 self.model.setItem(self.row,5,i_6)
                 r=self.search_fields(item1,item2)
-                if r:
+                if r is not None and r>=0:
                      v1 = self.db_model.index(r,3).data()
                      v2 = self.db_model.index(r,4).data()
                      v1 = v1 - float(item3)
@@ -449,6 +489,8 @@ class Pilot(QMainWindow):
                      self.db_model.setData(self.db_model.index(r,4),v2)
                      self.db_model.submitAll()
                      self.db_model.select()
+                     while self.db_model.canFetchMore():
+                         self.db_model.fetchMore()
                 else:
                     msg = QMessageBox(self)
                     msg.setWindowTitle("Missing row in database")
