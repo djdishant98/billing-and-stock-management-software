@@ -15,6 +15,8 @@ from PyQt5.QtWidgets import (QApplication,
                              QMessageBox,
                              QRadioButton,
                              QHeaderView,
+                             QStackedWidget,
+                             QAction
                              )
 from PyQt5.QtGui import (QFont,
                          QStandardItemModel, 
@@ -24,7 +26,7 @@ from PyQt5.QtGui import (QFont,
 from PyQt5.QtSql import QSqlTableModel , QSqlQuery , QSqlDatabase
 #from Stock.stock import Bill
 import json
-import re , sqlite3 , os
+import re , sqlite3 , os , sys
 from datetime import date , datetime
 from pathlib import Path
 
@@ -77,7 +79,9 @@ class Pilot(QMainWindow):
         #--------------------Creating main Layout---------------------------------
         #--------------------Creating widgets for layout desigining----------------
 
-        self.container_widget = QWidget()    
+        self.container_widget = QWidget()  
+        self.stack_ = QStackedWidget()
+        self.create_menu_bar()  
         header_widget = QFrame()
         header_widget.setFrameStyle(QFrame.Plain | QFrame.Panel)
         header_widget.setLineWidth(2)
@@ -260,8 +264,44 @@ class Pilot(QMainWindow):
         self.container_widget.setLayout(final_layout)
         self.layout_design(self.container_widget)
         self.setWindowTitle('Billing v1.0')
-        self.setCentralWidget(self.container_widget)
+        self.stack_.addWidget(self.container_widget)
+        self.stack_.setCurrentWidget(self.container_widget)
+        self.setCentralWidget(self.stack_)
         self.showMaximized()
+
+    #----------------------------Creating menu bar---------------------------------------------
+
+    def create_menu_bar(self):
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu('&Category')
+        exit_menu = menu_bar.addMenu('&Exit')
+
+        purchase_action = QAction('&Purchase',self)
+        purchase_action.setShortcut('Ctrl+D')
+        purchase_action.triggered.connect(self.purchase_function)
+        sell_action = QAction('&Sell',self)
+        sell_action.setShortcut('Ctrl+F')
+        sell_action.triggered.connect(self.sell_function)
+        file_menu.addAction(purchase_action)
+        file_menu.addAction(sell_action)
+
+        exit_action = QAction('&Exit',self)
+        exit_action.setShortcut('Ctrl+Q')
+        exit_action.triggered.connect(self.exit_function)
+        exit_menu.addAction(exit_action)
+
+    #------------------------------Event listeners of menubar-------------------------------
+
+    def purchase_function(self):
+        self.stack_.setCurrentWidget(self.container_widget)
+
+    def sell_function(self):
+        s = Sell(self)
+        self.stack_.addWidget(s)
+        self.stack_.setCurrentWidget(s)
+
+    def exit_function(self):
+        sys.exit(1)
 
     #----------------------------------creating database connection with existing table----------------
 
@@ -353,8 +393,8 @@ class Pilot(QMainWindow):
         b_final_layout.addLayout(layout3)
         b_final_layout.addWidget(frame3)
         self.p.setLayout(b_final_layout)
-        self.p.show()
-        self.setCentralWidget(self.p)
+        self.stack_.addWidget(self.p)
+        self.stack_.setCurrentWidget(self.p)
 
     #----------------------Establishing Database Connection----------------
 
@@ -656,6 +696,202 @@ class Pilot(QMainWindow):
                 self.rate.setText(self.s_rate)
         self.product_list.blockSignals(False)
         self.m_c.blockSignals(False)
+
+#---------------------------------Class for sell section------------------------------------
+
+class Sell(QWidget):
+    def __init__(self, parent =None):
+        super().__init__()
+        header_widget = QFrame()
+        header_widget.setFrameStyle(QFrame.Plain | QFrame.Panel)
+        header_widget.setLineWidth(2)
+        details_widget = QFrame()
+        details_widget.setFrameStyle(QFrame.Plain | QFrame.Panel)
+        details_widget.setLineWidth(1)
+        product_widget = QFrame()
+        product_widget.setFrameStyle(QFrame.Panel | QFrame.Plain)
+        product_widget.setLineWidth(1)
+        billing_widget = QFrame()
+        billing_widget.setFrameStyle(QFrame.Panel | QFrame.Plain)
+
+        self.head = QLabel("Ranakpur Jewellers")
+        self.gold = QRadioButton('GOLD')
+        self.silver = QRadioButton('SILVER')
+        self.head.setStyleSheet('font:30pt')
+        self.cus_name_label = QLabel('Name')
+        self.cus_name = QLineEdit()
+        self.cus_address_label = QLabel('Address')
+        self.cus_address = QLineEdit()
+        self.cus_contact_label = QLabel('Contact')
+        self.cus_contact = QLineEdit()
+        self.date_label = QLabel('Date')
+        today = date.today()
+        d=today.strftime("%d-%m-%Y")
+        self.date_ = QLabel(d)
+        self.product_list_label = QLabel('Product')
+        self.product_list = QComboBox()
+        self.product_list.setEditable(True)                 #Editing checkbox
+        self.product_quantity_label = QLabel('Quantity')
+        self.product_quantity = QLineEdit()
+        self.product_weight_label = QLabel('Weight')
+        self.product_weight = QLineEdit()
+        self.amount_label = QLabel('Amount')
+        self.amount = QLineEdit()
+        self.payment_mode_label = QLabel('Payment Mode')
+        self.payment_mode = QComboBox()
+        mode=['Cash','UPI','Cheque','RTGS/NEFT']
+        self.payment_mode.addItems(mode)
+        self.payment_mode.setEditable(True)
+        self.print_button = QPushButton("PRINT")
+        #self.print_button.setContentsMargins(20,20,20,20)
+        self.reset_button = QPushButton("RESET")
+        #self.reset_button.setContentsMargins(20,20,20,20)
+        self.add_button = QPushButton("ADD")
+        #self.add_button.setContentsMargins(20,20,20,20)
+        
+        #----------------------Events---------------------------------
+
+        self.print_button.clicked.connect(self.create_bill_function)
+        #self.print_button.released.connect(self.clear_field_function)
+        self.reset_button.clicked.connect(self.reset_function)
+        self.add_button.pressed.connect(self.print_function)
+        self.add_button.released.connect(self.clear_field_function)
+        self.gold.toggled.connect(self.gold_silver_toggle_function)
+        self.silver.toggled.connect(self.gold_silver_toggle_function)
+
+        #------------------------Header Layout-------------------------
+
+        header = QHBoxLayout()
+        header.addWidget(self.head,alignment=Qt.AlignmentFlag.AlignCenter)
+        header.addWidget(self.gold,alignment=Qt.AlignmentFlag.AlignRight)
+        header.addWidget(self.silver,alignment=Qt.AlignmentFlag.AlignRight)
+        header_widget.setLayout(header)
+        header_widget.setContentsMargins(20,20,20,20)
+
+        #----------------Customer details layout--------------------
+
+        name_layout = QHBoxLayout()
+        name_layout.addWidget(self.cus_name_label,stretch=30)
+        name_layout.addWidget(self.cus_name,stretch=70)
+        address_layout = QHBoxLayout()
+        address_layout.addWidget(self.cus_address_label,stretch=30)
+        address_layout.addWidget(self.cus_address,stretch=70)
+        contact_layout = QHBoxLayout()
+        contact_layout.addWidget(self.cus_contact_label,stretch=30)
+        contact_layout.addWidget(self.cus_contact,stretch=70)
+        date_layout = QHBoxLayout()
+        date_layout.addWidget(self.date_label,stretch=30)
+        date_layout.addWidget(self.date_,stretch=70)
+        details_layout = QVBoxLayout()
+        details_layout.addLayout(name_layout)
+        details_layout.addLayout(address_layout)
+        details_layout.addLayout(contact_layout)
+        details_layout.addLayout(date_layout)
+        details_widget.setLayout(details_layout)
+        details_widget.setContentsMargins(30,20,30,20)
+
+        #-----------------Product information layout------------------
+
+        product_list_layout = QHBoxLayout()
+        product_list_layout.addWidget(self.product_list_label,stretch=30)
+        product_list_layout.addWidget(self.product_list,stretch=70)
+        product_quantity_layout = QHBoxLayout()
+        product_quantity_layout.addWidget(self.product_quantity_label,stretch=30)
+        product_quantity_layout.addWidget(self.product_quantity,stretch=70)
+        product_weight_layout = QHBoxLayout()
+        product_weight_layout.addWidget(self.product_weight_label,stretch=30)
+        product_weight_layout.addWidget(self.product_weight,stretch=70)
+        product_layout = QVBoxLayout()
+        product_layout.addLayout(product_list_layout)
+        product_layout.addLayout(product_quantity_layout)
+        product_layout.addLayout(product_weight_layout)
+        product_widget.setLayout(product_layout)
+        product_widget.setContentsMargins(30,20,30,20)
+
+        #------------------Billing Layout--------------------------
+
+        amount_layout = QHBoxLayout()
+        amount_layout.addWidget(self.amount_label,stretch=30)
+        amount_layout.addWidget(self.amount,stretch=70)
+        mode_layout = QHBoxLayout()
+        mode_layout.addWidget(self.payment_mode_label,stretch=30)
+        mode_layout.addWidget(self.payment_mode,stretch=70)
+        billing_layout = QVBoxLayout()
+        billing_layout.addLayout(amount_layout)
+        billing_layout.addLayout(mode_layout)
+        billing_widget.setLayout(billing_layout)
+        billing_widget.setContentsMargins(30,20,30,20)
+
+        #------------------button layout-----------------------
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.print_button)
+        button_layout.addWidget(self.reset_button)
+        button_layout.addWidget(self.add_button)
+        button_layout.setContentsMargins(20,20,20,20)
+        button_layout.setAlignment(Qt.AlignRight)
+
+        #-------------------Table View Layout----------------------
+
+        self.view = QTableView()
+        self.row=0
+        self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(['Product','weight','Quantity','Amount','Mode'])
+        self.view.setModel(self.model)
+        self.view.setShowGrid(False)
+        #self.view.setContentsMargins(30,30,30,30)
+        self.view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        #self.view.setBackgroundRole
+
+        #------------------Final Window Page Layout--------------------
+
+        part_1_layout = QVBoxLayout()
+        part_2_layout = QVBoxLayout()
+        final_layout = QHBoxLayout()
+        part_1_layout.addWidget(header_widget)
+        part_1_layout.addWidget(details_widget)
+        part_1_layout.addWidget(product_widget)
+        part_1_layout.addWidget(billing_widget)
+        part_1_layout.addLayout(button_layout)
+        part_2_layout.addWidget(self.view)
+        final_layout.addLayout(part_1_layout)
+        final_layout.addLayout(part_2_layout)
+        self.setLayout(final_layout)
+        self.layout_design()
+        self.setWindowTitle('Billing v1.0')
+        self.showMaximized()
+
+    def layout_design(self):
+           design = """QLabel{font:18pt;
+                              color:#0c315b;
+                              background:#c3d2d9}
+                        QLineEdit{font:16pt;
+                                  color:#0c315b;
+                                  background:#e6dada}
+                        QComboBox{font:16pt;
+                                  color:#0c315b;
+                                  background:#e6dada}
+                        QPushButton{font:16pt;
+                                    background:#0a6ba0}""" 
+           self.setStyleSheet(design)
+
+    #--------------------------Event listeners functions of sell class------------------------
+
+    def create_bill_function(self):
+        pass
+
+    def reset_function(self):
+        pass
+
+    def print_function(self):
+        pass
+
+    def clear_field_function(self):
+        pass
+
+    def gold_silver_toggle_function(self):
+        pass
+
 
 if __name__ == '__main__':
     app = QApplication([])

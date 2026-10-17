@@ -29,14 +29,15 @@ from PyQt5.QtGui import (QFont,
                          )
 
 from PyQt5.QtSql import QSqlTableModel , QSqlDatabase , QSqlQuery
-import json
+import json ,sys ,os
 from pathlib import Path
 from Stock.stock import Bill
 
 class Admin(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.init_db()
+        if self.init_db() is False:
+            sys.exit(1)
         self.create_menu_bar()
         self.set_layout()
         self.showMaximized()
@@ -116,7 +117,9 @@ class Admin(QMainWindow):
 
         exit_action = QAction('&Exit',self)
         exit_action.setShortcut('Ctrl+Q')
-        exit_action.triggered.connect(self.close)
+        exit_action.triggered.connect(self.close_win)
+
+        exit_menu.addAction(exit_action)
 
 
     # ---------------- EVENT LISTENERS FOR THE MENU OPTIONS --------------------------------
@@ -147,8 +150,6 @@ class Admin(QMainWindow):
             except ValueError:
                 self.show_warning("Invalid number entered")
                 return False
-
-            
 
     def success_msg(self,t):
         msg = QMessageBox(self)
@@ -207,6 +208,9 @@ class Admin(QMainWindow):
     def remove_product_function(self):
         pass
 
+    def close_win(self):
+        sys.exit()
+
     #------------------------------initialising database-----------------------
 
     def init_db(self):
@@ -227,6 +231,7 @@ class Admin(QMainWindow):
             self.table_model.select()
             while self.table_model.canFetchMore():
                         self.table_model.fetchMore()
+            return True
 
     #----------------------Path for json file-----------------------------
 
