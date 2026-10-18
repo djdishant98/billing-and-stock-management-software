@@ -69,6 +69,8 @@ class Pilot(QMainWindow):
                     self.address = data.get("Address")
                     self.contact = data.get("Contact")
                     self.gst = data.get("GST")
+                    self.g_bill = data.get("G_Bill_No")
+                    self.s_bill = data.get("S_Bill_No")
 
             except json.JSONDecodeError:
                 print("Json file is corrupted")
@@ -290,6 +292,27 @@ class Pilot(QMainWindow):
         exit_action.triggered.connect(self.exit_function)
         exit_menu.addAction(exit_action)
 
+
+    #---------------------------Writing back Bill no.---------------------------------------
+
+    """def write_config(self,bill_no):
+        cur_dict = Path(__file__).resolve().parent
+        config_path = cur_dict/"Data"/"config.json"
+        if not config_path.exists():
+            data ={}
+        else:
+            try:
+                with open(str(config_path),'r') as file:
+                    data = json.load(file)
+                    data["G_Bill_no"] = bill_no
+                with open(str(config_path),'w') as file1:
+                    json.dump(data,file1,indent=4)
+                    data["G_Bill_no"] = self.g_bill
+            except json.JSONDecodeError:
+                    print("Json file is corrupted")
+                    return False"""
+
+
     #------------------------------Event listeners of menubar-------------------------------
 
     def purchase_function(self):
@@ -339,6 +362,8 @@ class Pilot(QMainWindow):
         self.label2 = QLabel(self.address)
         self.label3 = QLabel(self.contact)
         self.label4 = QLabel(self.gst)
+        self.billno_label = QLabel('Bill no.:')
+        self.billno = QLabel(str(self.g_bill))
         self.label5 = QLabel('GOLD/SILVER PURCHASE')
         self.label6 = QLabel('Name:')
         self.label6_1 = QLabel(self.cus_name.text())
@@ -367,6 +392,8 @@ class Pilot(QMainWindow):
         layout2_3.addWidget(self.label8)
         layout2_3.addWidget(self.label8_1)
         layout2_4 = QHBoxLayout()
+        layout2_4.addWidget(self.billno_label)
+        layout2_4.addWidget(self.billno)
         layout2_4.addWidget(self.label9)
         layout2.addLayout(layout2_1)
         layout2.addLayout(layout2_2)
@@ -702,6 +729,27 @@ class Pilot(QMainWindow):
 class Sell(QWidget):
     def __init__(self, parent =None):
         super().__init__()
+        self.init_sell_db()
+        cur_dict = Path(__file__).resolve().parent
+        config_path = cur_dict/"Data"/"config.json"
+        if not config_path.exists():
+            data ={}
+        else:
+            try:
+                with open(str(config_path),'r') as file:
+                    data = json.load(file)
+                    self.gold_list = data.get("Gold_List")
+                    self.silver_list = data.get("Silver_List")
+                    self.firm = data.get("Shop_Name")
+                    self.address = data.get("Address")
+                    self.contact = data.get("Contact")
+                    self.gst = data.get("GST")
+
+            except json.JSONDecodeError:
+                print("Json file is corrupted")
+                return False
+        self.orna = ''
+        self.total=0
         header_widget = QFrame()
         header_widget.setFrameStyle(QFrame.Plain | QFrame.Panel)
         header_widget.setLineWidth(2)
@@ -875,23 +923,132 @@ class Sell(QWidget):
                                     background:#0a6ba0}""" 
            self.setStyleSheet(design)
 
+    #--------------------------Initialize Database-------------------------------------
+
+    def init_sell_db():
+        p = Path(__file__).resolve()
+        db_path = p/"Stock"/"Stock_database.db"
+        if QSqlDatabase.contains("qt_sql_default_connection"):
+            db = QSqlDatabase.database("qt_sql_default_connection")
+        else:
+            db = QSqlDatabase.addDatabase("QSQLITE")
+            db.setDatabaseName(str(db_path),"qt_sql_default_connection")
+        if not db.open():
+            QMessageBox.critical(db.lastError().text())
+            return False
+        else:
+            query = QSqlQuery()
+            query.exec_("""
+                            CREATE TABLE IF NOT EXISTS sell(
+                            bill_no INTEGER PRIMARY KEY,
+                            name TEXT,
+                            address TEXT,
+                            contact TEXT,
+                            amount REAL,
+                            date TEXT)""")
+            query.clear()
+            query.exec_("""
+                            CREATE TABLE IF NOT EXISTS sell_detail(
+                            id INTEGER AUTOINCREMENT PRIMARY KEY
+                            bill_no INTEGER,
+                            product TEXT,
+                            amount REAL,
+                            mode TEXT,
+                            date TEXT,
+                            FOREIGN KEY(bill_no) REFERENCES sell(bill_no))""")
+            return True
+
     #--------------------------Event listeners functions of sell class------------------------
 
     def create_bill_function(self):
         pass
 
     def reset_function(self):
-        pass
+        self.clear_field_function()
+        self.cus_name.clear()
+        self.cus_address.clear()
+        self.cus_contact.clear()
+        self.gold.setChecked(False)
+        self.silver.setChecked(False)
+        self.model.removeRows(0,self.model.rowCount())
+        self.row=0
+        self.orna=''
+        self.total=0
 
     def print_function(self):
-        pass
 
+        a = self.product_list.currentText()
+        b = self.amount.text()
+        c = self.product_weight.text()
+        d = self.product_quantity.text()
+        e = self.payment_mode.currentText()
+        if not (a and b and c and d):
+            self.validate_msg("Enter all required fields")
+            self.amount.setPlaceholderText('*')
+            self.product_weight.setPlaceholderText('*')
+            self.product_quantity.setPlaceholderText('*')
+        else:
+            item1 = QStandardItem(a)
+            item1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.model.setItem(self.row,0,item1)
+            item2 = QStandardItem(c)
+            item2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.model.setItem(self.row,1,item2)
+            item3 = QStandardItem(d)
+            item3.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.model.setItem(self.row,2,item3)
+            self.total = self.total + float(b)
+            item4 = QStandardItem(b)
+            item4.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.model.setItem(self.row,3,item4)
+            item5 = QStandardItem(e)
+            item5.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.model.setItem(self.row,4,item5)
+            self.model.setItem(10,2,QStandardItem('Total'))
+            item6 = QStandardItem(str(self.total))
+            item6.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.model.setItem(10,3,item6)
+            self.row+=1
+        
     def clear_field_function(self):
-        pass
+        self.product_list.setCurrentIndex(0)
+        self.amount.clear()
+        self.product_weight.clear()
+        self.product_quantity.clear()
+        self.payment_mode.setCurrentIndex(0)
 
     def gold_silver_toggle_function(self):
-        pass
+        comodity = self.sender()
+        if comodity.isChecked():
+            text = comodity.text()
+            self.orna = text
+            self.product_list.blockSignals(True)
+            self.product_list.clear()                                        
+            if text == 'GOLD':
+                self.product_list.addItems(self.gold_list)
+            else:
+                self.product_list.addItems(self.silver_list)
+        self.product_list.blockSignals(False)
 
+    #------------------------Messagebox function----------------------------
+
+    def validate_msg(self,message):
+        msg = QMessageBox()
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Empty Fields")
+        msg.setText(message)
+        msg.exec_()
+        return True
+
+    def success_msg(self,message):
+        msg = QMessageBox()
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle("Success")
+        msg.setText(message)
+        msg.exec_()
+        return True 
 
 if __name__ == '__main__':
     app = QApplication([])
