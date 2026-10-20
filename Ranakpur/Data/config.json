@@ -64,5 +64,7 @@
     "Shop_Name": "Ranakpur Jewellers",
     "Address": "Ganj Bazar , Saraf Bazar , Ahilyanagar , MH , 414001",
     "Contact": "9552291371",
-    "GST": "27ACHPP7648A1ZH"
+    "GST": "27ACHPP7648A1ZH",
+    "G_Bill_No":"1001",
+    "S_Bill_No":"901"
 }
