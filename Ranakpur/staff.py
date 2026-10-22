@@ -16,7 +16,8 @@ from PyQt5.QtWidgets import (QApplication,
                              QRadioButton,
                              QHeaderView,
                              QStackedWidget,
-                             QAction
+                             QAction,
+                             QScrollArea
                              )
 from PyQt5.QtGui import (QFont,
                          QStandardItemModel, 
@@ -52,25 +53,25 @@ class Pilot(QMainWindow):
         cur_dict = Path(__file__).resolve().parent
         config_path = cur_dict/"Data"/"config.json"
         if not config_path.exists():
-            data ={}
+            self.data ={}
         else:
             try:
                 with open(str(config_path),'r') as file:
-                    data = json.load(file)
-                    self.gold_list = data.get("Gold_List")
-                    self.silver_list = data.get("Silver_List")
-                    carat = data.get("Carat")
-                    mode = data.get("Mode")
-                    self.gold_making = data.get("Gold_Making")
-                    self.silver_making = data.get("Silver_Making")
-                    self.g_rate = data.get("Gold_Rate")
-                    self.s_rate = data.get("Silver_Rate")
-                    self.firm = data.get("Shop_Name")
-                    self.address = data.get("Address")
-                    self.contact = data.get("Contact")
-                    self.gst = data.get("GST")
-                    self.g_bill = data.get("G_Bill_No")
-                    self.s_bill = data.get("S_Bill_No")
+                    self.data = json.load(file)
+                    self.gold_list = self.data.get("Gold_List")
+                    self.silver_list = self.data.get("Silver_List")
+                    carat = self.data.get("Carat")
+                    mode = self.data.get("Mode")
+                    self.gold_making = self.data.get("Gold_Making")
+                    self.silver_making = self.data.get("Silver_Making")
+                    self.g_rate = self.data.get("Gold_Rate")
+                    self.s_rate = self.data.get("Silver_Rate")
+                    self.firm = self.data.get("Shop_Name")
+                    self.address = self.data.get("Address")
+                    self.contact = self.data.get("Contact")
+                    self.gst = self.data.get("GST")
+                    self.g_bill = self.data.get("G_Bill_No")
+                    self.s_bill = self.data.get("S_Bill_No")
 
             except json.JSONDecodeError:
                 print("Json file is corrupted")
@@ -80,7 +81,8 @@ class Pilot(QMainWindow):
 
         #--------------------Creating main Layout---------------------------------
         #--------------------Creating widgets for layout desigining----------------
-
+        main_scroll = QScrollArea()
+        main_scroll.setWidgetResizable(True)
         self.container_widget = QWidget()  
         self.stack_ = QStackedWidget()
         self.create_menu_bar()  
@@ -264,10 +266,11 @@ class Pilot(QMainWindow):
         final_layout.addLayout(part_1_layout)
         final_layout.addLayout(part_2_layout)
         self.container_widget.setLayout(final_layout)
-        self.layout_design(self.container_widget)
+        main_scroll.setWidget(self.container_widget)
+        self.layout_design(main_scroll)
         self.setWindowTitle('Billing v1.0')
-        self.stack_.addWidget(self.container_widget)
-        self.stack_.setCurrentWidget(self.container_widget)
+        self.stack_.addWidget(main_scroll)
+        self.stack_.setCurrentWidget(main_scroll)
         self.setCentralWidget(self.stack_)
         self.showMaximized()
 
@@ -295,23 +298,19 @@ class Pilot(QMainWindow):
 
     #---------------------------Writing back Bill no.---------------------------------------
 
-    """def write_config(self,bill_no):
+    def write_config(self,bill_no):
         cur_dict = Path(__file__).resolve().parent
         config_path = cur_dict/"Data"/"config.json"
         if not config_path.exists():
             data ={}
         else:
             try:
-                with open(str(config_path),'r') as file:
-                    data = json.load(file)
-                    data["G_Bill_no"] = bill_no
+                self.data["G_Bill_No"] = bill_no
                 with open(str(config_path),'w') as file1:
-                    json.dump(data,file1,indent=4)
-                    data["G_Bill_no"] = self.g_bill
+                    json.dump(self.data,file1,indent=4)
             except json.JSONDecodeError:
                     print("Json file is corrupted")
-                    return False"""
-
+                    return False
 
     #------------------------------Event listeners of menubar-------------------------------
 
@@ -653,7 +652,8 @@ class Pilot(QMainWindow):
         if a and b and c :
             self.container_widget.hide()
             self.p_widget_function()
-            
+            bill_no = int(self.g_bill) + 1
+            self.write_config(bill_no)
         else:
             msg = QMessageBox(self)
             msg.setWindowTitle('Empty Field')
@@ -747,9 +747,13 @@ class Sell(QWidget):
 
             except json.JSONDecodeError:
                 print("Json file is corrupted")
-                return False
+                return None
         self.orna = ''
         self.total=0
+        self.billno_label = QLabel('Bill no.:')
+        self.billno = QLabel()
+        self.stack_ = QStackedWidget()
+        self.container_widget = QWidget()
         header_widget = QFrame()
         header_widget.setFrameStyle(QFrame.Plain | QFrame.Panel)
         header_widget.setLineWidth(2)
@@ -799,7 +803,7 @@ class Sell(QWidget):
         
         #----------------------Events---------------------------------
 
-        self.print_button.clicked.connect(self.create_bill_function)
+        self.print_button.pressed.connect(self.create_bill_function)
         #self.print_button.released.connect(self.clear_field_function)
         self.reset_button.clicked.connect(self.reset_function)
         self.add_button.pressed.connect(self.print_function)
@@ -884,7 +888,7 @@ class Sell(QWidget):
         self.view = QTableView()
         self.row=0
         self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(['Product','weight','Quantity','Amount','Mode'])
+        self.model.setHorizontalHeaderLabels(['Product','Weight','Quantity','Amount','Mode'])
         self.view.setModel(self.model)
         self.view.setShowGrid(False)
         #self.view.setContentsMargins(30,30,30,30)
@@ -904,7 +908,12 @@ class Sell(QWidget):
         part_2_layout.addWidget(self.view)
         final_layout.addLayout(part_1_layout)
         final_layout.addLayout(part_2_layout)
-        self.setLayout(final_layout)
+        l = QVBoxLayout()
+        self.container_widget.setLayout(final_layout)
+        self.stack_.addWidget(self.container_widget)
+        self.stack_.setCurrentWidget(self.container_widget)
+        l.addWidget(self.stack_)
+        self.setLayout(l)
         self.layout_design()
         self.setWindowTitle('Billing v1.0')
         self.showMaximized()
@@ -921,47 +930,141 @@ class Sell(QWidget):
                                   background:#e6dada}
                         QPushButton{font:16pt;
                                     background:#0a6ba0}""" 
-           self.setStyleSheet(design)
+           self.container_widget.setStyleSheet(design)
 
     #--------------------------Initialize Database-------------------------------------
 
-    def init_sell_db():
-        p = Path(__file__).resolve()
+    def init_sell_db(self):
+        p = Path(__file__).resolve().parent
         db_path = p/"Stock"/"Stock_database.db"
         if QSqlDatabase.contains("qt_sql_default_connection"):
             db = QSqlDatabase.database("qt_sql_default_connection")
-        else:
+        else: 
             db = QSqlDatabase.addDatabase("QSQLITE")
-            db.setDatabaseName(str(db_path),"qt_sql_default_connection")
+            db.setDatabaseName(str(db_path))
         if not db.open():
             QMessageBox.critical(db.lastError().text())
             return False
         else:
             query = QSqlQuery()
-            query.exec_("""
-                            CREATE TABLE IF NOT EXISTS sell(
-                            bill_no INTEGER PRIMARY KEY,
-                            name TEXT,
-                            address TEXT,
-                            contact TEXT,
-                            amount REAL,
-                            date TEXT)""")
+            query.exec_("DROP TABLE IF EXISTS sell;")
+            query.exec_("DROP TABLE IF EXISTS sell_detail;")
+            query.exec_("DELETE FROM sqlite_sequence WHERE name='sell';")
+            query.exec_("DELETE FROM sqlite_sequence WHERE name='sell_detail';")
             query.clear()
-            query.exec_("""
-                            CREATE TABLE IF NOT EXISTS sell_detail(
-                            id INTEGER AUTOINCREMENT PRIMARY KEY
-                            bill_no INTEGER,
-                            product TEXT,
-                            amount REAL,
-                            mode TEXT,
-                            date TEXT,
-                            FOREIGN KEY(bill_no) REFERENCES sell(bill_no))""")
+            a = db.tables()
+            if 'sell' in a:
+                if 'sell_detail' in a :
+                    print('both tbles are present')
+                else:
+                    print("sell table is present")
+            else :
+                print("No table present")
             return True
+
+#-------------------------Printing bill layout---------------------------
+
+    def p_widget_function(self):
+        self.p = QWidget()
+        frame1 = QFrame()
+        frame1.setFrameStyle(QFrame.Panel | QFrame.Plain)
+        frame1.setLineWidth(4)
+        frame2 = QFrame()
+        frame2.setFrameStyle(QFrame.Panel | QFrame.Plain)
+        frame2.setLineWidth(2)
+        frame3 = QFrame()
+        frame3.setFrameStyle(QFrame.Panel | QFrame.Plain)
+        frame3.setLineWidth(2)
+        self.label1 = QLabel("Ranakpur Jewellers")
+        self.label2 = QLabel(self.address)
+        self.label3 = QLabel(self.contact)
+        self.label4 = QLabel(self.gst)
+        self.label5 = QLabel('GOLD/SILVER SELL')
+        self.label6 = QLabel('Name:')
+        self.label6_1 = QLabel(self.cus_name.text())
+        self.label7 = QLabel('Address:')
+        self.label7_1 = QLabel(self.cus_address.text())
+        self.label8 = QLabel('Contact:')
+        self.label8_1 = QLabel(self.cus_contact.text())
+        self.label9 = QLabel(self.date_.text())
+        time = datetime.now()
+        self.label10 = QLabel(f'Customer\'s Sign')
+        self.label11 = QLabel('For Ranakpur Jewellers')
+        self.label12 = QLabel(str(time))
+        layout1 = QVBoxLayout()
+        layout1.addWidget(self.label1)
+        layout1.addWidget(self.label2)
+        layout1.addWidget(self.label3)
+        layout1.addWidget(self.label4)
+        layout2 = QVBoxLayout()
+        layout2_1 = QHBoxLayout()
+        layout2_1.addWidget(self.label6)
+        layout2_1.addWidget(self.label6_1)
+        layout2_2 = QHBoxLayout()
+        layout2_2.addWidget(self.label7)
+        layout2_2.addWidget(self.label7_1)
+        layout2_3 = QHBoxLayout()
+        layout2_3.addWidget(self.label8)
+        layout2_3.addWidget(self.label8_1)
+        layout2_4 = QHBoxLayout()
+        layout2_4.addWidget(self.billno_label)
+        layout2_4.addWidget(self.billno)
+        layout2_4.addWidget(self.label9)
+        layout2.addLayout(layout2_1)
+        layout2.addLayout(layout2_2)
+        layout2.addLayout(layout2_3)
+        layout2.addLayout(layout2_4)
+        frame1.setLayout(layout1)
+        frame2.setLayout(layout2)
+        layout3 = QVBoxLayout()
+        layout3.addWidget(self.label5,alignment=Qt.AlignmentFlag.AlignCenter)
+        self.v = QTableView()
+        self.v.setShowGrid(False)
+        self.v.setContentsMargins(30,30,30,30)
+        self.v.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.v.setModel(self.model)
+        layout3.addWidget(self.v)
+        layout4 = QHBoxLayout()
+        layout4.addWidget(self.label10,alignment=Qt.AlignmentFlag.AlignLeft)
+        layout4.addWidget(self.label11,alignment=Qt.AlignmentFlag.AlignRight)
+        layout4.addWidget(self.label12,alignment=Qt.AlignmentFlag.AlignBottom)
+        frame3.setLayout(layout4)
+        b_final_layout = QVBoxLayout()
+        b_final_layout.addWidget(frame1)
+        b_final_layout.addWidget(frame2)
+        b_final_layout.addLayout(layout3)
+        b_final_layout.addWidget(frame3)
+        self.p.setLayout(b_final_layout)
+        self.stack_.addWidget(self.p)
+        self.stack_.setCurrentWidget(self.p)
 
     #--------------------------Event listeners functions of sell class------------------------
 
     def create_bill_function(self):
-        pass
+        a = self.cus_name.text()
+        b = self.cus_address.text()
+        c = self.cus_contact.text()
+
+        if not (a and b and c):
+            self.validate_msg('Enter customer\'s details')
+            return
+        else:
+            query = QSqlQuery()
+            if query.exec_("""SELECT MAX(bill_no) FROM sell"""):
+                if query.next():
+                    raw_query = query.value(0)
+                    if str(raw_query).strip() != '' and raw_query is not None:
+                        b_n_1 = raw_query
+                        b_n = str(int(b_n_1)+1)
+                    else:
+                        b_n = '1'
+                else:
+                    b_n ='1'
+            else:
+                return
+            self.p_widget_function()
+            self.billno.clear()
+            self.billno.setText(str(b_n))
 
     def reset_function(self):
         self.clear_field_function()
