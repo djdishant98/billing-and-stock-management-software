@@ -76,24 +76,3 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = RadioExample()
     sys.exit(app.exec_())
- query.exec_("""
-                             CREATE TABLE IF NOT EXISTS sell(
-                             bill_no INTEGER PRIMARY KEY,
-                             name TEXT,
-                             address TEXT,
-                             contact TEXT,
-                             amount NUMERIC(10,3),
-                             date TEXT)""")
-             query.clear()
-             query.exec_("""
-                             CREATE TABLE IF NOT EXISTS sell_detail(
-                             id INTEGER PRIMARY KEY AUTOINCREMENT
-                             bill_no INTEGER,
-                             product TEXT,
-                             weight NUMERIC(10,2),
-                             quantity INTEGER,
-                             amount NUMERIC(10,3),
-                             mode TEXT,
-                             date TEXT,
-                             FOREIGN KEY(bill_no) REFERENCES sell(bill_no))""")
-             query.clear()

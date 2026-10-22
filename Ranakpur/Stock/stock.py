@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import (QTableView,
 from datetime import datetime , date
 import json , os
 from pathlib import Path
+from Ranakpur.Stock.db import Db_Manager
 
 class Bill(QWidget):
     def __init__(self,parent=None):
@@ -81,7 +82,7 @@ class Bill(QWidget):
         self.s_btn.clicked.connect(self.s_function)
         self.r_btn.clicked.connect(self.r_function)
 
-        self.init_db()
+        self.d = Db_Manager()
         self.init_model()
         l = QVBoxLayout()
         b_l = QHBoxLayout()
@@ -243,34 +244,8 @@ class Bill(QWidget):
             self.t_.clear()
             self.table.clearSelection()
             
-#-------------------Initialising Database---------------------------------------
+#-------------------Initialising Database model---------------------------------------
 
-    def init_db(self):
-
-        if QSqlDatabase.contains("qt_sql_default_connection"):
-            # Re-use the existing active database connection pointer safely
-            db = QSqlDatabase.database("qt_sql_default_connection")
-        else:
-            db = QSqlDatabase.addDatabase('QSQLITE')
-
-            db.setDatabaseName('Stock_database.db')
-        if not db.open():
-            QMessageBox.critical(self,db.lastError().text())
-            return False
-        else:
-            query = QSqlQuery()
-            query.exec_("""CREATE TABLE IF NOT EXISTS stock(
-                            p_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            product TEXT,
-                            carat TEXT,
-                            weight REAL,
-                            quantity INT,
-                            entry_date TEXT,
-                            previous_date TEXT)""")
-            #query1 = QSqlQuery()
-            #query1.exec_("""ALTER TABLE stock ADD COLUMN previous_date TEXT""")
-            return True
-        
     def init_model(self):
 
         self.m = QSqlTableModel(self)
