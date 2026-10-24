@@ -219,7 +219,7 @@ class Pilot(QMainWindow):
         product_layout.addLayout(product_quantity_layout)
         product_layout.addLayout(product_weight_layout)
         product_layout.addLayout(weight_less_layout)
-        product_layout.addLayout(net_layout)
+        #product_layout.addLayout(net_layout)
         product_layout.addLayout(product_carat_layout)
         product_widget.setLayout(product_layout)
         product_widget.setContentsMargins(30,20,30,20)
@@ -608,13 +608,13 @@ class Pilot(QMainWindow):
                 elif item5 == '200B':
 
                     m_c = item5[:-1]
-                    item7 = (int(item3) * int(item4) * int(item6)) + (int(m_c)* int(item3)/10)
+                    item7 = (float(item3) * int(item4) * int(item6)) + (int(m_c)* float(item3)/10)
                     i_6 = QStandardItem(str(item6))
 
                 elif item5 == '350P':
 
                     m_c = item5[:-1]
-                    item7 = (int(item3) * int(item4) * int(item6)) + int(m_c)
+                    item7 = (float(item3) * int(item4) * int(item6)) + int(m_c)
                     i_6 = QStandardItem(str(m_c))
 
                 else:
