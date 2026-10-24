@@ -30,6 +30,7 @@ import json
 import re , sqlite3 , os , sys
 from datetime import date , datetime
 from pathlib import Path
+from Stock.db import Db_Manager
 
 """class TableModal(QAbstractTableModel):
     def __init__(self,data):
@@ -49,7 +50,10 @@ from pathlib import Path
 class Pilot(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.init_background_db()
+        self.d = Db_Manager()
+        self.db_model = QSqlTableModel()
+        self.db_model.setTable('stock')
+        self.db_model.select()
         cur_dict = Path(__file__).resolve().parent
         config_path = cur_dict/"Data"/"config.json"
         if not config_path.exists():
@@ -98,7 +102,7 @@ class Pilot(QMainWindow):
         billing_widget = QFrame()
         billing_widget.setFrameStyle(QFrame.Panel | QFrame.Plain)
         billing_table_widget = QFrame()
-        billing_widget.setFrameStyle(QFrame.Panel | QFrame.Plain)
+        billing_table_widget.setFrameStyle(QFrame.Panel | QFrame.Plain)
 
         self.head = QLabel("Ranakpur Jewellers")
         self.gold = QRadioButton('GOLD')
@@ -121,6 +125,10 @@ class Pilot(QMainWindow):
         self.product_quantity = QLineEdit()
         self.product_weight_label = QLabel('Weight')
         self.product_weight = QLineEdit()
+        self.weight_less_lable = QLabel('Less')
+        self.weight_less = QLineEdit()
+        self.net_label = QLabel('Net Weight')
+        self.net = QLineEdit()
         self.product_carat_label = QLabel('Carat')
         self.product_carat = QComboBox()
         self.product_carat.addItems(carat)
@@ -194,6 +202,12 @@ class Pilot(QMainWindow):
         product_quantity_layout = QHBoxLayout()
         product_quantity_layout.addWidget(self.product_quantity_label,stretch=30)
         product_quantity_layout.addWidget(self.product_quantity,stretch=70)
+        weight_less_layout = QHBoxLayout()
+        weight_less_layout.addWidget(self.weight_less_lable,stretch=30)
+        weight_less_layout.addWidget(self.weight_less,stretch=70)
+        net_layout = QHBoxLayout()
+        net_layout.addWidget(self.net_label,stretch=30)
+        net_layout.addWidget(self.net,stretch=70)
         product_weight_layout = QHBoxLayout()
         product_weight_layout.addWidget(self.product_weight_label,stretch=30)
         product_weight_layout.addWidget(self.product_weight,stretch=70)
@@ -204,6 +218,8 @@ class Pilot(QMainWindow):
         product_layout.addLayout(product_list_layout)
         product_layout.addLayout(product_quantity_layout)
         product_layout.addLayout(product_weight_layout)
+        product_layout.addLayout(weight_less_layout)
+        product_layout.addLayout(net_layout)
         product_layout.addLayout(product_carat_layout)
         product_widget.setLayout(product_layout)
         product_widget.setContentsMargins(30,20,30,20)
@@ -245,7 +261,7 @@ class Pilot(QMainWindow):
         self.view = QTableView()
         self.row=0
         self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(['Product','carat/purity','weight','Quantity','Making','Rate','Amount'])
+        self.model.setHorizontalHeaderLabels(['Product','carat/purity','weight','less','net weight','Quantity','Making','Rate','Amount'])
         self.view.setModel(self.model)
         self.view.setShowGrid(False)
         #self.view.setContentsMargins(30,30,30,30)
@@ -327,8 +343,8 @@ class Pilot(QMainWindow):
 
     #----------------------------------creating database connection with existing table----------------
 
-    def init_background_db(self):
-        db_p= f'{Path.cwd()}/Stock/Stock_database.db'
+    """ def init_background_db(self):
+        #db_p= f'{Path.cwd()}/Stock/Stock_database.db'
         current_dir = Path(__file__).resolve().parent
         db_path = current_dir/"Stock"/"Stock_database.db"
         if QSqlDatabase.contains("qt_sql_default_connection"):
@@ -343,7 +359,7 @@ class Pilot(QMainWindow):
         else:
             self.db_model = QSqlTableModel(self,db)
             self.db_model.setTable('stock')
-            self.db_model.select()
+            self.db_model.select()  """
 
         #--------------------------------Creating Bill Print layout---------------------------
     def p_widget_function(self):
@@ -446,18 +462,38 @@ class Pilot(QMainWindow):
     #----------------------function for desigining layouts----------------
 
     def layout_design(self,c):
-       design = """QLabel{font:18pt;
+       design = """QLabel{font:14pt;
                           color:#0c315b;
                           background:#c3d2d9}
-                    QLineEdit{font:16pt;
+                    QLineEdit{font:12pt;
                               color:#0c315b;
                               background:#e6dada}
-                    QComboBox{font:16pt;
+                    QComboBox{font:14pt;
                               color:#0c315b;
                               background:#e6dada}
-                    QPushButton{font:16pt;
+                    QPushButton{font:12pt;
                                 background:#0a6ba0}""" 
        c.setStyleSheet(design)
+
+#----------------------------functions for validating messages---------------------------------------
+
+    def validate_msg(self,message):
+        msg = QMessageBox()
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Empty Fields")
+        msg.setText(message)
+        msg.exec_()
+        return True
+
+    def success_msg(self,message):
+        msg = QMessageBox()
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle("Success")
+        msg.setText(message)
+        msg.exec_()
+        return True 
 
 #------------------------function to search in model for stock update during bill print function---------------------------
 
@@ -479,14 +515,9 @@ class Pilot(QMainWindow):
         gt = 0
         row = self.model.rowCount()
         if row is None:
-            msg = QMessageBox(self)
-            msg.setIcon(QMessageBox.Information)
-            msg.setWindowTitle("Null Entries")
-            msg.setText("Nothing to calculate")
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
+            self.validate_msg("Nothing to calculate")
         else:
-            tt = self.model.data(self.model.index(10,6))
+            tt = self.model.data(self.model.index(10,8))
             sgst = (float(tt) * 1.5)/100 
             cgst = sgst
             gst = cgst + sgst
@@ -499,14 +530,14 @@ class Pilot(QMainWindow):
             item10.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             item11 = QStandardItem(str(gt))
             item11.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.model.setItem(11,5,QStandardItem('SGST'))
-            self.model.setItem(12,5,QStandardItem('CGST'))
-            self.model.setItem(13,5,QStandardItem('GST'))
-            self.model.setItem(14,5,QStandardItem('Grand Total'))
-            self.model.setItem(11,6,item8)
-            self.model.setItem(12,6,item9)
-            self.model.setItem(13,6,item10)
-            self.model.setItem(14,6,item11)
+            self.model.setItem(11,7,QStandardItem('SGST'))
+            self.model.setItem(12,7,QStandardItem('CGST'))
+            self.model.setItem(13,7,QStandardItem('GST'))
+            self.model.setItem(14,7,QStandardItem('Grand Total'))
+            self.model.setItem(11,8,item8)
+            self.model.setItem(12,8,item9)
+            self.model.setItem(13,8,item10)
+            self.model.setItem(14,8,item11)
 
     #----------------------function to print bill-------------------------------------
 
@@ -518,24 +549,28 @@ class Pilot(QMainWindow):
         item3 = self.product_weight.text()
         item4 = self.product_quantity.text()
         item5 = self.m_c.currentText()
+        item8 = self.weight_less.text()
+        item8 = item8 if item8 else '0.0'
 
+        if float(item3) > float(item8):
+            temp = float(item3) - float(item8)
+            item9 = str(temp)
+            self.net.setText(item9)
+            item3 = item9                           #setting total weight (weight-less)
+        else :
+            self.validate_msg("Weight error,Enter less weight correctly")    
+            return
+        
         if  not item1 or not item2 or not item3 or not item4:
-
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Empty Field')
-            msg.setText("Enter the Necessary details\nAll Fields Should be filled up")
-            msg.setIcon(QMessageBox.Warning)
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec()
+            self.validate_msg("Enter all fields")
         else:
-
             m_c = item5[:-1]
             item6 = self.rate.text()
 
             if self.orna == 'GOLD':
 
                 making = (int(item6) * int(m_c))/100
-                item7 = (float(item3) * int(item4) * int(item6)) + (float(item3) * int(item4) * making)
+                item7 = ((float(item3)) * int(item4) * int(item6)) + (float(item3) * int(item4) * making)
                 self.amount.setText(str(item7))
                 i_2 = QStandardItem(item2)
                 i_2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -544,7 +579,7 @@ class Pilot(QMainWindow):
                 i_6 = QStandardItem(item6)
                 i_6.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 i_6.setBackground(QBrush(QColor('lightblue')))
-                self.model.setItem(self.row,5,i_6)
+                self.model.setItem(self.row,7,i_6)
                 r=self.search_fields(item1,item2)
                 if r is not None and r>=0:
                      v1 = self.db_model.index(r,3).data()
@@ -558,12 +593,7 @@ class Pilot(QMainWindow):
                      while self.db_model.canFetchMore():
                          self.db_model.fetchMore()
                 else:
-                    msg = QMessageBox(self)
-                    msg.setWindowTitle("Missing row in database")
-                    msg.setIcon(QMessageBox.Warning)
-                    msg.setText("The product or carat is not available in Datatabase")
-                    msg.setStandardButtons(QMessageBox.Ok)
-                    msg.exec_()
+                    self.validate_msg("Product or carat is not mentioned")
 
             else :
 
@@ -599,33 +629,41 @@ class Pilot(QMainWindow):
                 self.model.setItem(self.row,1,i_2)
                 i_6.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 i_6.setBackground(QBrush(QColor('lightblue')))
-                self.model.setItem(self.row,5,i_6)
+                self.model.setItem(self.row,7,i_6)
 
             i_1 = QStandardItem(item1)                        
             i_1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             i_1.setBackground(QBrush(QColor("lightblue")))
             self.model.setItem(self.row,0,i_1)
-            i_3 = QStandardItem(item3)
+            i_3 = QStandardItem(self.product_weight.text())
             i_3.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             i_3.setBackground(QBrush(QColor("lightblue")))
             self.model.setItem(self.row,2,i_3)
+            i_8 = QStandardItem(item8)
+            i_8.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            i_8.setBackground(QBrush(QColor("lightblue")))
+            self.model.setItem(self.row,3,i_8)
+            i_9 = QStandardItem(item9)
+            i_9.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            i_9.setBackground(QBrush(QColor("lightblue")))
+            self.model.setItem(self.row,4,i_9)
             i_4 = QStandardItem(item4)
             i_4.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             i_4.setBackground(QBrush(QColor("lightblue")))
-            self.model.setItem(self.row,3,i_4)
+            self.model.setItem(self.row,5,i_4)
             i_5 = QStandardItem(item5)
             i_5.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             i_5.setBackground(QBrush(QColor("lightblue")))
-            self.model.setItem(self.row,4,i_5) 
+            self.model.setItem(self.row,6,i_5) 
             i_7 = QStandardItem(str(item7))
             i_7.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             i_7.setBackground(QBrush(QColor("lightblue")))
-            self.model.setItem(self.row,6,i_7)
+            self.model.setItem(self.row,8,i_7)
             self.row+=1
 
             for i in range(self.row):
 
-                item_ = self.model.item(i,6)
+                item_ = self.model.item(i,8)
 
                 if item_ is not None and item_.text():
 
@@ -633,12 +671,12 @@ class Pilot(QMainWindow):
                     t=QStandardItem(str(total))
                     t.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                     t.setBackground(QBrush(QColor('#c3d2d9')))
-                    self.model.setItem(10,6,t)
+                    self.model.setItem(10,8,t)
 
                 tt = QStandardItem("Total")
                 tt.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 tt.setBackground(QBrush(QColor('#c3d2d9')))
-                self.model.setItem(10,5,tt)
+                self.model.setItem(10,7,tt)
 
 
     #-----------------------function to create bill--------------------------------
@@ -655,13 +693,7 @@ class Pilot(QMainWindow):
             bill_no = int(self.g_bill) + 1
             self.write_config(bill_no)
         else:
-            msg = QMessageBox(self)
-            msg.setWindowTitle('Empty Field')
-            msg.setText("Enter the Necessary details\nAll Fields Should be filled up")
-            msg.setIcon(QMessageBox.Warning)
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec()
-
+            self.validate_msg("Enter the necessary details\nEnter all fields")
 
     #-----------------------function to clear fields after printing to table-----------------
 
@@ -672,6 +704,8 @@ class Pilot(QMainWindow):
         self.product_carat.setCurrentIndex(0)
         self.payment_mode.setCurrentIndex(0)
         self.m_c.setCurrentIndex(0)
+        self.weight_less.clear()
+        self.net.clear()
         self.amount.clear()
             
 
@@ -683,6 +717,8 @@ class Pilot(QMainWindow):
         self.cus_address.clear()
         self.product_weight.clear()
         self.product_quantity.clear()
+        self.weight_less.clear()
+        self.net.clear()
         self.product_list.setCurrentIndex(0)
         self.product_carat.setCurrentIndex(0)
         self.payment_mode.setCurrentIndex(0)
@@ -729,7 +765,7 @@ class Pilot(QMainWindow):
 class Sell(QWidget):
     def __init__(self, parent =None):
         super().__init__()
-        self.init_sell_db()
+        self.s_d = Db_Manager()
         cur_dict = Path(__file__).resolve().parent
         config_path = cur_dict/"Data"/"config.json"
         if not config_path.exists():
@@ -932,36 +968,6 @@ class Sell(QWidget):
                                     background:#0a6ba0}""" 
            self.container_widget.setStyleSheet(design)
 
-    #--------------------------Initialize Database-------------------------------------
-
-    def init_sell_db(self):
-        p = Path(__file__).resolve().parent
-        db_path = p/"Stock"/"Stock_database.db"
-        if QSqlDatabase.contains("qt_sql_default_connection"):
-            db = QSqlDatabase.database("qt_sql_default_connection")
-        else: 
-            db = QSqlDatabase.addDatabase("QSQLITE")
-            db.setDatabaseName(str(db_path))
-        if not db.open():
-            QMessageBox.critical(db.lastError().text())
-            return False
-        else:
-            query = QSqlQuery()
-            query.exec_("DROP TABLE IF EXISTS sell;")
-            query.exec_("DROP TABLE IF EXISTS sell_detail;")
-            query.exec_("DELETE FROM sqlite_sequence WHERE name='sell';")
-            query.exec_("DELETE FROM sqlite_sequence WHERE name='sell_detail';")
-            query.clear()
-            a = db.tables()
-            if 'sell' in a:
-                if 'sell_detail' in a :
-                    print('both tbles are present')
-                else:
-                    print("sell table is present")
-            else :
-                print("No table present")
-            return True
-
 #-------------------------Printing bill layout---------------------------
 
     def p_widget_function(self):
@@ -1041,31 +1047,42 @@ class Sell(QWidget):
     #--------------------------Event listeners functions of sell class------------------------
 
     def create_bill_function(self):
-        a = self.cus_name.text()
-        b = self.cus_address.text()
-        c = self.cus_contact.text()
+        a = self.cus_name.text().strip()
+        b = self.cus_address.text().strip()
+        c = self.cus_contact.text().strip()
 
         if not (a and b and c):
             self.validate_msg('Enter customer\'s details')
             return
         else:
-            query = QSqlQuery()
-            if query.exec_("""SELECT MAX(bill_no) FROM sell"""):
-                if query.next():
-                    raw_query = query.value(0)
-                    if str(raw_query).strip() != '' and raw_query is not None:
-                        b_n_1 = raw_query
-                        b_n = str(int(b_n_1)+1)
-                    else:
-                        b_n = '1'
-                else:
-                    b_n ='1'
-            else:
-                return
+            b_n = self.s_d.select_billno_sell()                                      #selecting bill number from sell table                         
+            m = self.model
+            count = m.rowCount()
+            if count>0:
+                self.s_d.insert_into_sell(b_n,a,b,c,self.total,self.date_.text())
+                for r in range(count):
+                    item2 = str(m.data(m.index(r,0),Qt.ItemDataRole.DisplayRole)).strip()
+                    item3 = str(m.data(m.index(r,1),Qt.ItemDataRole.DisplayRole)).strip()
+                    item4 = str(m.data(m.index(r,2),Qt.ItemDataRole.DisplayRole)).strip()
+                    item5 = str(m.data(m.index(r,3),Qt.ItemDataRole.DisplayRole)).strip()
+                    item6 = str(m.data(m.index(r,4),Qt.ItemDataRole.DisplayRole)).strip()
+                    """ item2 = m.item(r,0)
+                    item2 = item2.text() if item2.text() is not None else ''
+                    item3 = m.item(r,1)
+                    item3 = item3.text() if item3.text() is not None else '0.0'
+                    item4 = m.item(r,2)
+                    item4 = item4.text() if item4.text() is not None else '1'
+                    item5 = m.item(r,3)
+                    item5 = item5.text() if item5.text() is not None else '0.0'
+                    item6 = m.item(r,4)
+                    item6 = item6.text() if item6.text() is not None else '' """
+                    if item2 != "None" and item3 != "None" and item5 != "None":
+                        self.s_d.insert_into_sell_detail(b_n,item2,item3,item4,item5,item6,self.date_.text())
+                self.success_msg("Database updated")
             self.p_widget_function()
             self.billno.clear()
             self.billno.setText(str(b_n))
-
+            
     def reset_function(self):
         self.clear_field_function()
         self.cus_name.clear()
@@ -1080,17 +1097,19 @@ class Sell(QWidget):
 
     def print_function(self):
 
-        a = self.product_list.currentText()
-        b = self.amount.text()
-        c = self.product_weight.text()
-        d = self.product_quantity.text()
-        e = self.payment_mode.currentText()
+        a = self.product_list.currentText().strip()
+        b = self.amount.text().strip()
+        c = self.product_weight.text().strip()
+        d = self.product_quantity.text().strip()
+        e = self.payment_mode.currentText().strip()
         if not (a and b and c and d):
             self.validate_msg("Enter all required fields")
             self.amount.setPlaceholderText('*')
             self.product_weight.setPlaceholderText('*')
             self.product_quantity.setPlaceholderText('*')
         else:
+            c = c if c else "0.0"
+            d = d if d else "1"
             item1 = QStandardItem(a)
             item1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.model.setItem(self.row,0,item1)
@@ -1107,6 +1126,7 @@ class Sell(QWidget):
             item5 = QStandardItem(e)
             item5.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.model.setItem(self.row,4,item5)
+            append_row = [item1,item2,item3,item4,item5]
             self.model.setItem(10,2,QStandardItem('Total'))
             item6 = QStandardItem(str(self.total))
             item6.setTextAlignment(Qt.AlignmentFlag.AlignCenter)

@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (QTableView,
 from datetime import datetime , date
 import json , os
 from pathlib import Path
-from Ranakpur.Stock.db import Db_Manager
+from db import Db_Manager
 
 class Bill(QWidget):
     def __init__(self,parent=None):
