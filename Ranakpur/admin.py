@@ -215,13 +215,13 @@ class Admin(QMainWindow):
 
     def init_db(self):
 
-        if QSqlDatabase.contains('qt_sql_default_connection'):
+        """ if QSqlDatabase.contains('qt_sql_default_connection'):
             db = QSqlDatabase.database('qt_sql_default_connection')
-        else:
-            db = QSqlDatabase.addDatabase('QSQLITE')
-            cur_dir = Path(__file__).resolve().parent
-            db_path = cur_dir/"Stock"/"Stock_database.db"
-            db.setDatabaseName(str(db_path))
+        else: """
+        db = QSqlDatabase.addDatabase('QSQLITE')
+        cur_dir = Path(__file__).resolve().parent
+        db_path = cur_dir/"Stock"/"Stock_database.db"
+        db.setDatabaseName(str(db_path))
         if not db.open():
             QMessageBox.critical(self,db.lastError().text())
             return False

@@ -50,7 +50,7 @@ from Stock.db import Db_Manager
 class Pilot(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.d = Db_Manager()
+        self.b_d = Db_Manager()
         self.db_model = QSqlTableModel()
         self.db_model.setTable('stock')
         self.db_model.select()
@@ -82,11 +82,11 @@ class Pilot(QMainWindow):
                 return False
         self.orna =''
 
+#------------------------------Creating main Layout-------------------------------------------
 
-        #--------------------Creating main Layout---------------------------------
         #--------------------Creating widgets for layout desigining----------------
-        main_scroll = QScrollArea()
-        main_scroll.setWidgetResizable(True)
+        self.main_scroll = QScrollArea()
+        self.main_scroll.setWidgetResizable(True)
         self.container_widget = QWidget()  
         self.stack_ = QStackedWidget()
         self.create_menu_bar()  
@@ -114,6 +114,9 @@ class Pilot(QMainWindow):
         self.cus_address = QLineEdit()
         self.cus_contact_label = QLabel('Contact')
         self.cus_contact = QLineEdit()
+        self.pan_label = QLabel('PAN no.')
+        self.pan = QLineEdit()
+        self.pan.setPlaceholderText("Enter PAN card no. for cash transactions")
         self.date_label = QLabel('Date')
         today = date.today()
         d=today.strftime("%d-%m-%Y")
@@ -133,8 +136,8 @@ class Pilot(QMainWindow):
         self.product_carat = QComboBox()
         self.product_carat.addItems(carat)
         self.product_carat.setEditable(True)
-        self.amount_label = QLabel('Amount')
-        self.amount = QLineEdit()
+        self.discount_label = QLabel('Dicount')
+        self.discount = QLineEdit()
         self.payment_mode_label = QLabel('Payment Mode')
         self.payment_mode = QComboBox()
         self.payment_mode.addItems(mode)
@@ -162,6 +165,7 @@ class Pilot(QMainWindow):
         self.add_button.released.connect(self.clear_field_function)
         self.gold.toggled.connect(self.gold_silver_toggle_function)
         self.silver.toggled.connect(self.gold_silver_toggle_function)
+        self.weight_less.editingFinished.connect(self.calculate_net_weight)
 
         #------------------------Header Layout-------------------------
 
@@ -183,6 +187,9 @@ class Pilot(QMainWindow):
         contact_layout = QHBoxLayout()
         contact_layout.addWidget(self.cus_contact_label,stretch=30)
         contact_layout.addWidget(self.cus_contact,stretch=70)
+        pan_layout = QHBoxLayout()
+        pan_layout.addWidget(self.pan_label,stretch=30)
+        pan_layout.addWidget(self.pan,stretch=70)
         date_layout = QHBoxLayout()
         date_layout.addWidget(self.date_label,stretch=30)
         date_layout.addWidget(self.date_,stretch=70)
@@ -190,6 +197,7 @@ class Pilot(QMainWindow):
         details_layout.addLayout(name_layout)
         details_layout.addLayout(address_layout)
         details_layout.addLayout(contact_layout)
+        details_layout.addLayout(pan_layout)
         details_layout.addLayout(date_layout)
         details_widget.setLayout(details_layout)
         details_widget.setContentsMargins(30,20,30,20)
@@ -226,9 +234,9 @@ class Pilot(QMainWindow):
 
         #------------------Billing Layout--------------------------
 
-        amount_layout = QHBoxLayout()
-        amount_layout.addWidget(self.amount_label,stretch=30)
-        amount_layout.addWidget(self.amount,stretch=70)
+        discount_layout = QHBoxLayout()
+        discount_layout.addWidget(self.discount_label,stretch=30)
+        discount_layout.addWidget(self.discount,stretch=70)
         rate_layout = QHBoxLayout()
         rate_layout.addWidget(self.rate_label,stretch=30)
         rate_layout.addWidget(self.rate,stretch=70)
@@ -241,7 +249,7 @@ class Pilot(QMainWindow):
         billing_layout = QVBoxLayout()
         billing_layout.addLayout(rate_layout)
         billing_layout.addLayout(making_layout)
-        billing_layout.addLayout(amount_layout)
+        billing_layout.addLayout(discount_layout)
         billing_layout.addLayout(mode_layout)
         billing_widget.setLayout(billing_layout)
         billing_widget.setContentsMargins(30,20,30,20)
@@ -282,11 +290,11 @@ class Pilot(QMainWindow):
         final_layout.addLayout(part_1_layout)
         final_layout.addLayout(part_2_layout)
         self.container_widget.setLayout(final_layout)
-        main_scroll.setWidget(self.container_widget)
-        self.layout_design(main_scroll)
+        self.main_scroll.setWidget(self.container_widget)
+        self.layout_design(self.main_scroll)
         self.setWindowTitle('Billing v1.0')
-        self.stack_.addWidget(main_scroll)
-        self.stack_.setCurrentWidget(main_scroll)
+        self.stack_.addWidget(self.main_scroll)
+        self.stack_.setCurrentWidget(self.main_scroll)
         self.setCentralWidget(self.stack_)
         self.showMaximized()
 
@@ -311,7 +319,6 @@ class Pilot(QMainWindow):
         exit_action.triggered.connect(self.exit_function)
         exit_menu.addAction(exit_action)
 
-
     #---------------------------Writing back Bill no.---------------------------------------
 
     def write_config(self,bill_no):
@@ -321,7 +328,10 @@ class Pilot(QMainWindow):
             data ={}
         else:
             try:
-                self.data["G_Bill_No"] = bill_no
+                if self.orna == 'GOLD':
+                    self.data["G_Bill_No"] = bill_no
+                else:
+                    self.data["S_Bill_No"] = bill_no
                 with open(str(config_path),'w') as file1:
                     json.dump(self.data,file1,indent=4)
             except json.JSONDecodeError:
@@ -331,7 +341,7 @@ class Pilot(QMainWindow):
     #------------------------------Event listeners of menubar-------------------------------
 
     def purchase_function(self):
-        self.stack_.setCurrentWidget(self.container_widget)
+        self.stack_.setCurrentWidget(self.main_scroll)
 
     def sell_function(self):
         s = Sell(self)
@@ -378,7 +388,10 @@ class Pilot(QMainWindow):
         self.label3 = QLabel(self.contact)
         self.label4 = QLabel(self.gst)
         self.billno_label = QLabel('Bill no.:')
-        self.billno = QLabel(str(self.g_bill))
+        if self.orna == 'GOLD':
+            self.billno = QLabel(str(self.g_bill))
+        else:
+            self.billno = QLabel(str(self.s_bill))
         self.label5 = QLabel('GOLD/SILVER PURCHASE')
         self.label6 = QLabel('Name:')
         self.label6_1 = QLabel(self.cus_name.text())
@@ -506,9 +519,36 @@ class Pilot(QMainWindow):
                 return r
         return False
 
+#------------------------------calculating net weight----------------------------------
+
+    def calculate_net_weight(self):
+        a = self.product_weight.text()
+        b = self.weight_less.text()
+        if a != '' and b != '':
+            if float(a)>float(b):
+                self.net.setText(str(float(a)-float(b)))
+            else:
+                self.validate_msg("Product weight should be greater")
+
     #----------------------function to create GST bill--------------------------------
 
     def create_GST_function(self):
+        a=self.model.item(10,8)
+        b=self.model.item(11,8)
+        c=self.model.item(12,8)
+        d=self.model.item(13,8)
+        e=self.model.item(14,8)
+        if (a and b and c and d and e) is not None:
+            self.model.item(10,7).clearData()
+            self.model.item(11,7).clearData()
+            self.model.item(12,7).clearData()
+            self.model.item(13,7).clearData()
+            self.model.item(14,7).clearData()
+            self.model.item(10,8).clearData()
+            self.model.item(11,8).clearData()
+            self.model.item(12,8).clearData()
+            self.model.item(13,8).clearData()
+            self.model.item(14,8).clearData()
         sgst = 0
         cgst = 0
         gst = 0
@@ -517,11 +557,22 @@ class Pilot(QMainWindow):
         if row is None:
             self.validate_msg("Nothing to calculate")
         else:
-            tt = self.model.data(self.model.index(10,8))
+            disc = self.discount.text().strip()
+            if disc == '':
+                disc = 0.0
+            else:
+                disc = float(disc)
+            before_disc = self.model.data(self.model.index(10,8))
+            tt = float(before_disc) - disc
             sgst = (float(tt) * 1.5)/100 
+            sgst = f"{sgst:.2f}"
             cgst = sgst
-            gst = cgst + sgst
+            gst = float(cgst) + float(sgst)
             gt = float(tt) + gst
+            gst = f"{gst:.2f}"
+            gt = f"{gt:.2f}"
+            item7 =QStandardItem(str(disc))
+            item7.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             item8 = QStandardItem(str(sgst))
             item8.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             item9 = QStandardItem(str(cgst))
@@ -530,10 +581,12 @@ class Pilot(QMainWindow):
             item10.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             item11 = QStandardItem(str(gt))
             item11.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.model.setItem(9,7,QStandardItem('Discount'))
             self.model.setItem(11,7,QStandardItem('SGST'))
             self.model.setItem(12,7,QStandardItem('CGST'))
             self.model.setItem(13,7,QStandardItem('GST'))
             self.model.setItem(14,7,QStandardItem('Grand Total'))
+            self.model.setItem(9,8,item7)
             self.model.setItem(11,8,item8)
             self.model.setItem(12,8,item9)
             self.model.setItem(13,8,item10)
@@ -555,6 +608,7 @@ class Pilot(QMainWindow):
         if float(item3) > float(item8):
             temp = float(item3) - float(item8)
             item9 = str(temp)
+            item9 = f"{float(item9):.3f}"
             self.net.setText(item9)
             item3 = item9                           #setting total weight (weight-less)
         else :
@@ -571,7 +625,6 @@ class Pilot(QMainWindow):
 
                 making = (int(item6) * int(m_c))/100
                 item7 = ((float(item3)) * int(item4) * int(item6)) + (float(item3) * int(item4) * making)
-                self.amount.setText(str(item7))
                 i_2 = QStandardItem(item2)
                 i_2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 i_2.setBackground(QBrush(QColor('lightblue')))
@@ -686,12 +739,47 @@ class Pilot(QMainWindow):
         a = self.cus_name.text()
         b = self.cus_contact.text()
         c = self.cus_address.text()
-
+        d = self.pan.text()
+        m = self.model
+        count = m.rowCount()
         if a and b and c :
-            self.container_widget.hide()
+            #self.container_widget.hide() 
+            if count > 0:
+                item10 = str(m.data(m.index(14,8))).strip()                        #Grand total
+                item11 = str(m.data(m.index(13,8))).strip()                        #GST
+                item12 = str(m.data(m.index(12,8))).strip()                        #CGST
+                item13 = str(m.data(m.index(11,8))).strip()                        #SGST
+                if self.orna == 'GOLD':
+                    self.b_d.insert_into_buy(self.g_bill,a,c,b,d,item10,self.discount.text(),self.payment_mode.currentText(),self.date_.text())
+                    self.b_d.insert_into_gst_gold(self.g_bill,item13,item12,item11,self.date_.text())
+                else:
+                    self.b_d.insert_into_buy_silver(self.s_bill,a,c,b,d,item10,self.discount.text(),self.payment_mode.currentText(),self.date_.text())
+                    self.b_d.insert_into_gst_silver(self.s_bill,item13,item12,item11,self.date_.text())
+                for r in range(count):
+                    item1 = str(m.data(m.index(r,0))).strip()                       #Product
+                    item2 = str(m.data(m.index(r,1))).strip()                       #carat/purity
+                    item3 = str(m.data(m.index(r,2))).strip()                       #weight
+                    item4 = str(m.data(m.index(r,3))).strip()                       #less
+                    item5 = str(m.data(m.index(r,4))).strip()                       #net weight
+                    item6 = str(m.data(m.index(r,5))).strip()                       #qunatity
+                    item7 = str(m.data(m.index(r,6))).strip()                       #making
+                    item8 = str(m.data(m.index(r,7))).strip()                       #rate
+                    item9 = str(m.data(m.index(r,8))).strip()                       #amount
+                    if item1 != 'None' and item3 != 'None':
+                        if self.orna == 'GOLD':
+                            self.b_d.insert_into_buy_detail(self.g_bill,item1,item2,item3,item4,item5,item6,item7,item8,item9,self.date_.text())
+                        else:
+                            self.b_d.insert_into_buy_silver_detail(self.s_bill,item1,item2,item3,item4,item5,item6,item7,item8,item9,self.date_.text())        
+            if self.orna == 'GOLD':
+                bill_no = int(self.g_bill) + 1
+                self.write_config(bill_no)
+            else:
+                bill_no =int(self.s_bill) + 1
+                self.write_config(bill_no)
+            self.model.setItem(15,7,QStandardItem('Payment mode'))
+            mode = self.payment_mode.currentText()
+            self.model.setItem(15,8,QStandardItem(mode))
             self.p_widget_function()
-            bill_no = int(self.g_bill) + 1
-            self.write_config(bill_no)
         else:
             self.validate_msg("Enter the necessary details\nEnter all fields")
 
@@ -706,9 +794,9 @@ class Pilot(QMainWindow):
         self.m_c.setCurrentIndex(0)
         self.weight_less.clear()
         self.net.clear()
-        self.amount.clear()
+        self.discount.clear()
+        self.pan.clear()
             
-
     #-----------------------function to reset details-------------------
 
     def reset_function(self):
@@ -719,11 +807,13 @@ class Pilot(QMainWindow):
         self.product_quantity.clear()
         self.weight_less.clear()
         self.net.clear()
+        self.discount.clear()
+        self.pan.clear()
         self.product_list.setCurrentIndex(0)
         self.product_carat.setCurrentIndex(0)
         self.payment_mode.setCurrentIndex(0)
         self.m_c.setCurrentIndex(0)
-        self.amount.clear()
+        #self.amount.clear()
         self.model.removeRows(0,self.model.rowCount())   #clearing model
         self.row = 0
 
