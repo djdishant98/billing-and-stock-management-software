@@ -15,12 +15,13 @@ from PyQt5.QtWidgets import (QApplication,
                              QRadioButton,
                              QHeaderView,
                              QAction,
+                             QMenu,
+                             QHeaderView,
                              QStackedWidget,
                              QStyledItemDelegate
                              )
 
-from PyQt5.QtCore import Qt
-
+from PyQt5.QtCore import Qt 
 from PyQt5.QtGui import (QFont,
                          QStandardItemModel, 
                          QStandardItem,
@@ -31,7 +32,8 @@ from PyQt5.QtGui import (QFont,
 from PyQt5.QtSql import QSqlTableModel , QSqlDatabase , QSqlQuery
 import json ,sys ,os
 from pathlib import Path
-from Stock.stock import Bill
+from Stock.stock import Bill , Detail
+from Stock.db import Db_Manager
 
 class Admin(QMainWindow):
     def __init__(self):
@@ -61,6 +63,8 @@ class Admin(QMainWindow):
             }
         """)
         # 2. Add top-level menu categories
+        home_menu = menu_bar.addMenu('&Home')
+        home_menu.triggered.connect(self.home_function)
         file_menu = menu_bar.addMenu('&File')
         search_menu = menu_bar.addMenu('&Search')
         update_menu = menu_bar.addMenu('&Update')
@@ -71,18 +75,38 @@ class Admin(QMainWindow):
         # 3. Create clickable Actions for the 'File' menu
         # Using & before a letter creates a quick keyboard Alt shortcut (e.g., Alt+F)
 
-        c_r_action = QAction('&Customer Record', self)
+        c_r_menu = QMenu('&Customer Record',self)
+        c_r_action = QAction('&Purchase',self)
         c_r_action.setShortcut('Ctrl+R')                           
-        c_r_action.triggered.connect(self.customer_record_function)      
+        c_r_action.triggered.connect(self.customer_record_function)  
+
+        c_r_s_action  = QAction('&Sell',self)
+        c_r_s_action.setShortcut('Ctrl+Y')
+        c_r_s_action.triggered.connect(self.customer_record_function)
+
+        gst_g_action = QAction('&Gold GST',self)
+        gst_g_action.triggered.connect(self.customer_record_function)
+
+        gst_s_action = QAction('&Silver GST',self)
+        gst_s_action.triggered.connect(self.customer_record_function)
+
+        c_r_menu.addAction(c_r_action)
+        c_r_menu.addSeparator()
+        c_r_menu.addAction(c_r_s_action)
+        c_r_menu.addSeparator()    
+        c_r_menu.addAction(gst_g_action)
+        c_r_menu.addSeparator()
+        c_r_menu.addAction(gst_s_action)
 
         s_r_action = QAction('&Stock Record', self)
         s_r_action.setShortcut('Ctrl+E')
         s_r_action.triggered.connect(self.stock_record_function)                    
 
         # Append choices to the File dropdown column list
-        file_menu.addAction(c_r_action)
+        file_menu.addMenu(c_r_menu)
         file_menu.addSeparator() # Visual dividing line decoration spacer
         file_menu.addAction(s_r_action)
+
 
         # 4. Create actions for the 'Search' menu
 
@@ -123,9 +147,34 @@ class Admin(QMainWindow):
 
 
     # ---------------- EVENT LISTENERS FOR THE MENU OPTIONS --------------------------------
+
+    def home_function(self):
+        pass
     
     def customer_record_function(self):
-        pass
+        category = None
+        category = self.sender()
+        t = QTableView()
+        t.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        m = QSqlTableModel()
+        m.clear()
+        if category is not None:
+            name = category.text()
+            req = name[1:]
+        else:
+            return
+        d = Detail()
+        if req == 'Purchase':
+            m = d.show_table('buy')   
+        elif req == 'Sell':
+            m = d.show_table('sell')
+        elif req == 'Gold GST':
+            m = d.show_table('gst_gold')
+        elif req == 'Silver GST':
+            m = d.show_table('gst_silver')
+        t.setModel(m)
+        self.stack_.addWidget(t)
+        self.stack_.setCurrentWidget(t)
 
     def stock_record_function(self):
         self.stack_.setCurrentWidget(self.frame4)
@@ -218,20 +267,21 @@ class Admin(QMainWindow):
         """ if QSqlDatabase.contains('qt_sql_default_connection'):
             db = QSqlDatabase.database('qt_sql_default_connection')
         else: """
-        db = QSqlDatabase.addDatabase('QSQLITE')
+        """ db = QSqlDatabase.addDatabase('QSQLITE')
         cur_dir = Path(__file__).resolve().parent
         db_path = cur_dir/"Stock"/"Stock_database.db"
         db.setDatabaseName(str(db_path))
         if not db.open():
             QMessageBox.critical(self,db.lastError().text())
-            return False
-        else:
-            self.table_model = QSqlTableModel(self,db)
-            self.table_model.setTable('stock')
-            self.table_model.select()
-            while self.table_model.canFetchMore():
-                        self.table_model.fetchMore()
-            return True
+            return False 
+        else:"""
+        self.d = Db_Manager()
+        self.table_model = QSqlTableModel(self)
+        self.table_model.setTable('stock')
+        self.table_model.select()
+        while self.table_model.canFetchMore():
+                    self.table_model.fetchMore()
+        return True
 
     #----------------------Path for json file-----------------------------
 

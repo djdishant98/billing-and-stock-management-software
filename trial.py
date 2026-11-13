@@ -37,7 +37,7 @@ ra.setStyleSheet('QWidget{background-color:#F7EEE7} QLabel{font-size:24pt}')
 ra.show()
 app.exec_()"""
 
-import sys
+""" import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QRadioButton, QVBoxLayout, QLabel
 
 class RadioExample(QWidget):
@@ -75,4 +75,5 @@ class RadioExample(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = RadioExample()
-    sys.exit(app.exec_())
+    sys.exit(app.exec_()) """
+

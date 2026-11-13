@@ -166,6 +166,7 @@ class Pilot(QMainWindow):
         self.gold.toggled.connect(self.gold_silver_toggle_function)
         self.silver.toggled.connect(self.gold_silver_toggle_function)
         self.weight_less.editingFinished.connect(self.calculate_net_weight)
+        self.discount.editingFinished.connect(self.calculate_total)
 
         #------------------------Header Layout-------------------------
 
@@ -227,7 +228,7 @@ class Pilot(QMainWindow):
         product_layout.addLayout(product_quantity_layout)
         product_layout.addLayout(product_weight_layout)
         product_layout.addLayout(weight_less_layout)
-        #product_layout.addLayout(net_layout)
+        product_layout.addLayout(net_layout)
         product_layout.addLayout(product_carat_layout)
         product_widget.setLayout(product_layout)
         product_widget.setContentsMargins(30,20,30,20)
@@ -341,10 +342,12 @@ class Pilot(QMainWindow):
     #------------------------------Event listeners of menubar-------------------------------
 
     def purchase_function(self):
+        self.reset_function()                                   #Clears the screen
         self.stack_.setCurrentWidget(self.main_scroll)
 
     def sell_function(self):
         s = Sell(self)
+        self.reset_function()
         self.stack_.addWidget(s)
         self.stack_.setCurrentWidget(s)
 
@@ -530,6 +533,16 @@ class Pilot(QMainWindow):
             else:
                 self.validate_msg("Product weight should be greater")
 
+#---------------------------calculating total after discount----------------------------
+
+    def calculate_total(self):
+        count = self.model.rowCount()
+        if count > 0:
+            t = self.model.data(self.model.index(10,8))
+            total = float(t) - float(self.discount.text())
+            total = QStandardItem(str(total))
+            self.model.setItem(10,8,total)
+
     #----------------------function to create GST bill--------------------------------
 
     def create_GST_function(self):
@@ -562,8 +575,8 @@ class Pilot(QMainWindow):
                 disc = 0.0
             else:
                 disc = float(disc)
-            before_disc = self.model.data(self.model.index(10,8))
-            tt = float(before_disc) - disc
+            tt = self.model.data(self.model.index(10,8))
+            #tt = float(before_disc) - disc
             sgst = (float(tt) * 1.5)/100 
             sgst = f"{sgst:.2f}"
             cgst = sgst
@@ -604,20 +617,19 @@ class Pilot(QMainWindow):
         item5 = self.m_c.currentText()
         item8 = self.weight_less.text()
         item8 = item8 if item8 else '0.0'
-
-        if float(item3) > float(item8):
-            temp = float(item3) - float(item8)
-            item9 = str(temp)
-            item9 = f"{float(item9):.3f}"
-            self.net.setText(item9)
-            item3 = item9                           #setting total weight (weight-less)
-        else :
-            self.validate_msg("Weight error,Enter less weight correctly")    
-            return
         
         if  not item1 or not item2 or not item3 or not item4:
             self.validate_msg("Enter all fields")
         else:
+            if float(item3) > float(item8):
+                        temp = float(item3) - float(item8)
+                        item9 = str(temp)
+                        item9 = f"{float(item9):.3f}"
+                        self.net.setText(item9)
+                        item3 = item9                           #setting total weight (weight-less)
+            else :
+                self.validate_msg("Weight error,Enter less weight correctly")    
+                return
             m_c = item5[:-1]
             item6 = self.rate.text()
 
@@ -720,7 +732,12 @@ class Pilot(QMainWindow):
 
                 if item_ is not None and item_.text():
 
-                    total = total + float(item_.text())
+                    d = self.discount.text()
+                    if d == '' or d == 'None':
+                        d = 0.0
+                    else:
+                        d = float(d)
+                    total = total + float(item_.text()) - d
                     t=QStandardItem(str(total))
                     t.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                     t.setBackground(QBrush(QColor('#c3d2d9')))

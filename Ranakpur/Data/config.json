@@ -34,6 +34,14 @@
         "Ring 70",
         "Ring 95"
     ],
+    "Purity": [
+        "50",
+        "60",
+        "70",
+        "80",
+        "925",
+        "95"
+    ],
     "Carat": [
         "22k",
         "20k",
@@ -59,12 +67,12 @@
         "200B",
         "350P"
     ],
-    "Gold_Rate": "13000",
-    "Silver_Rate": "210",
+    "Gold_Rate": "12700",
+    "Silver_Rate": "180",
     "Shop_Name": "Ranakpur Jewellers",
     "Address": "Ganj Bazar , Saraf Bazar , Ahilyanagar , MH , 414001",
     "Contact": "9552291371",
     "GST": "27ACHPP7648A1ZH",
-    "G_Bill_No": 1012,
+    "G_Bill_No": 1016,
     "S_Bill_No": 907
 }
