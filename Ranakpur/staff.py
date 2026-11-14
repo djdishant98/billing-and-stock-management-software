@@ -645,20 +645,6 @@ class Pilot(QMainWindow):
                 i_6.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 i_6.setBackground(QBrush(QColor('lightblue')))
                 self.model.setItem(self.row,7,i_6)
-                r=self.search_fields(item1,item2)
-                if r is not None and r>=0:
-                     v1 = self.db_model.index(r,3).data()
-                     v2 = self.db_model.index(r,4).data()
-                     v1 = v1 - float(item3)
-                     v2 = v2 - int(item4)
-                     self.db_model.setData(self.db_model.index(r,3),v1)
-                     self.db_model.setData(self.db_model.index(r,4),v2)
-                     self.db_model.submitAll()
-                     self.db_model.select()
-                     while self.db_model.canFetchMore():
-                         self.db_model.fetchMore()
-                else:
-                    self.validate_msg("Product or carat is not mentioned")
 
             else :
 
@@ -725,6 +711,20 @@ class Pilot(QMainWindow):
             i_7.setBackground(QBrush(QColor("lightblue")))
             self.model.setItem(self.row,8,i_7)
             self.row+=1
+            r=self.search_fields(item1,item2)
+            if r is not None and r>=0:
+                    v1 = self.db_model.index(r,3).data()
+                    v2 = self.db_model.index(r,4).data()
+                    v1 = v1 - float(item3)
+                    v2 = v2 - int(item4)
+                    self.db_model.setData(self.db_model.index(r,3),v1)
+                    self.db_model.setData(self.db_model.index(r,4),v2)
+                    self.db_model.submitAll()
+                    self.db_model.select()
+                    while self.db_model.canFetchMore():
+                        self.db_model.fetchMore()
+            else:
+                self.validate_msg("Product or carat is not mentioned")
 
             for i in range(self.row):
 
@@ -857,6 +857,8 @@ class Pilot(QMainWindow):
                 self.rate.setText(self.g_rate)
                 self.product_carat.setVisible(True)
                 self.product_carat_label.setVisible(True)
+                self.db_model.setTable('stock')
+                self.db_model.select()
             else:
                 self.product_list.addItems(self.silver_list)
                 self.m_c.addItems(self.silver_making)
@@ -864,6 +866,8 @@ class Pilot(QMainWindow):
                 self.product_carat.hide()
                 #self.product_carat.setVisible(False)
                 self.rate.setText(self.s_rate)
+                self.db_model.setTable('stock_silver')
+                self.db_model.select()
         self.product_list.blockSignals(False)
         self.m_c.blockSignals(False)
 
@@ -1162,11 +1166,11 @@ class Sell(QWidget):
             self.validate_msg('Enter customer\'s details')
             return
         else:
-            b_n = self.s_d.select_billno_sell()                                      #selecting bill number from sell table                         
+            b_n = self.s_d.select_billno_sell(self.orna)                                      #selecting bill number from sell table                         
             m = self.model
             count = m.rowCount()
             if count>0:
-                self.s_d.insert_into_sell(b_n,a,b,c,self.total,self.date_.text())
+                self.s_d.insert_into_sell(self.orna,b_n,a,b,c,self.total,self.date_.text())
                 for r in range(count):
                     item2 = str(m.data(m.index(r,0),Qt.ItemDataRole.DisplayRole)).strip()
                     item3 = str(m.data(m.index(r,1),Qt.ItemDataRole.DisplayRole)).strip()
@@ -1184,7 +1188,7 @@ class Sell(QWidget):
                     item6 = m.item(r,4)
                     item6 = item6.text() if item6.text() is not None else '' """
                     if item2 != "None" and item3 != "None" and item5 != "None":
-                        self.s_d.insert_into_sell_detail(b_n,item2,item3,item4,item5,item6,self.date_.text())
+                        self.s_d.insert_into_sell_detail(self.orna,b_n,item2,item3,item4,item5,item6,self.date_.text())
                 self.success_msg("Database updated")
             self.p_widget_function()
             self.billno.clear()

@@ -159,7 +159,10 @@ class Bill(QWidget):
     def a_function(self):
 
         a = self.p_.currentText()
-        b = self.c_.currentText()
+        if self.category.currentText() == 'Gold':
+            b = self.c_.currentText()
+        else:
+            b = self.pt_.currentText()
         c = self.q_.text().strip()
         d = self.t_.text().strip()
         dd = self.d_.text()
@@ -204,6 +207,7 @@ class Bill(QWidget):
 
     def a_clear_function(self):
         self.p_.setCurrentIndex(0)
+        self.pt_.setCurrentIndex(0)
         self.c_.setCurrentIndex(0)
         self.q_.clear()
         self.t_.clear()
@@ -212,7 +216,10 @@ class Bill(QWidget):
 
     def s_function(self):
         a = self.p_.currentText()
-        b = self.c_.currentText()
+        if self.category.currentText() == 'Gold':
+            b = self.c_.currentText()
+        else:
+            b = self.pt_.currentText()
         self.table.clearSelection()
         if not (a and b):
             self.show_msg('Empty Fields','Nothing to search') 
@@ -241,7 +248,10 @@ class Bill(QWidget):
 
     def d_function(self):
         a = self.p_.currentText()
-        b = self.c_.currentText()
+        if self.category.currentText() == 'Gold':
+            b = self.c_.currentText()
+        else:
+            b = self.pt_.currentText()
         c = self.q_.text().strip()
         d = self.t_.text().strip()
         dd = self.d_.text()
@@ -301,6 +311,7 @@ class Bill(QWidget):
     def d_clear_function(self):
         self.p_.setCurrentIndex(0)
         self.c_.setCurrentIndex(0)
+        self.pt_.setCurrentIndex(0)
         self.q_.clear()
         self.t_.clear()
 

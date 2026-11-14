@@ -167,9 +167,12 @@ class Db_Manager:
 
 #-------------------------insertion operation in sell table---------------------------------------
 
-    def insert_into_sell(self,*values):
-        items = list(values)
-        data = """INSERT INTO sell(bill_no,name,address,contact,amount,date) VALUES (?,?,?,?,?,?)"""
+    def insert_into_sell(self,category,b_n,n,a,c,at,d):
+        items = [b_n,n,a,c,at,d]
+        if category == 'Gold':
+            data = """INSERT INTO sell(bill_no,name,address,contact,amount,date) VALUES (?,?,?,?,?,?)"""
+        else:
+            data = """INSERT INTO sell_silver(bill_no,name,address,contact,amount,date) VALUES (?,?,?,?,?,?)"""
         query = QSqlQuery()
         if len(items) == 6:
             query.prepare(data)
@@ -186,25 +189,39 @@ class Db_Manager:
 
 #--------------------------------------returns bill number of sell table--------------------------------------
 
-    def select_billno_sell(self):                                            
+    def select_billno_sell(self,category):                                            
         query = QSqlQuery()
-        if query.exec_("""SELECT MAX(bill_no) FROM sell"""):
-            if query.next():
-                raw_query = query.value(0)
-                if str(raw_query).strip() != '' and raw_query is not None:
-                    b_n = str(int(raw_query)+1)
+        if category == 'Gold':
+            if query.exec_("""SELECT MAX(bill_no) FROM sell"""):
+                if query.next():
+                    raw_query = query.value(0)
+                    if str(raw_query).strip() != '' and raw_query is not None:
+                        b_n = str(int(raw_query)+1)
+                    else:
+                        b_n = '1'
                 else:
-                    b_n = '1'
-            else:
-                b_n ='1'
+                    b_n ='1'
+        else:
+            if query.exec_("""SELECT MAX(bill_no) FROM sell_silver"""):
+                if query.next():
+                    raw_query = query.value(0)
+                    if str(raw_query).strip() != '' and raw_query is not None:
+                        b_n = str(int(raw_query)+1)
+                    else:
+                        b_n = '1'
+                else:
+                    b_n ='1'
         return b_n
 
 #-------------------------------insertion into sell_detail table-------------------------------------------------
 
-    def insert_into_sell_detail(self,b_n,item2,item3,item4,item5,item6,datee):
+    def insert_into_sell_detail(self,category,b_n,item2,item3,item4,item5,item6,datee):
         items = [b_n,item2,item3,item4,item5,item6,datee]
         query = QSqlQuery()
-        data = """INSERT INTO sell_detail(bill_no,product,weight,quantity,amount,mode,date) VALUES(?,?,?,?,?,?,?)"""
+        if category == 'Gold':
+            data = """INSERT INTO sell_detail(bill_no,product,weight,quantity,amount,mode,date) VALUES(?,?,?,?,?,?,?)"""
+        else:
+            data = """INSERT INTO sell_silver_detail(bill_no,product,weight,quantity,amount,mode,date) VALUES(?,?,?,?,?,?,?)"""
         query.prepare(data)
         try:
             val1 = int(items[0])
