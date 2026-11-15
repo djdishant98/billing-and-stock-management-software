@@ -19,6 +19,7 @@ class Db_Manager:
             #cls._instance.select_table('gst_silver')
             #cls._instance.select_table('buy_silver')
             #cls._instance.select_table('buy_silver_detail')
+            #cls._instance.select_table('sell_silver')
             #cls._instance.delete_table('sell')
             #cls._instance.delete_table('sell_detail')
             #cls._instance.delete_table('buy')
@@ -651,4 +652,4 @@ class Db_Manager:
             print(f"Unsuccessful deletetion for {table_name}")
 
 
-#d = Db_Manager()
+d = Db_Manager()

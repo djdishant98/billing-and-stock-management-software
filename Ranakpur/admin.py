@@ -18,10 +18,11 @@ from PyQt5.QtWidgets import (QApplication,
                              QMenu,
                              QHeaderView,
                              QStackedWidget,
-                             QStyledItemDelegate
+                             QStyledItemDelegate,
+                             QDateEdit
                              )
 
-from PyQt5.QtCore import Qt 
+from PyQt5.QtCore import Qt ,QDate
 from PyQt5.QtGui import (QFont,
                          QStandardItemModel, 
                          QStandardItem,
@@ -30,6 +31,7 @@ from PyQt5.QtGui import (QFont,
                          )
 
 from PyQt5.QtSql import QSqlTableModel , QSqlDatabase , QSqlQuery
+from datetime import date,datetime
 import json ,sys ,os
 from pathlib import Path
 from Stock.stock import Bill , Detail
@@ -66,6 +68,7 @@ class Admin(QMainWindow):
         home_menu = menu_bar.addMenu('&Home')
         home_menu.triggered.connect(self.home_function)
         file_menu = menu_bar.addMenu('&File')
+        detail_menu =menu_bar.addMenu('&Details')
         search_menu = menu_bar.addMenu('&Search')
         update_menu = menu_bar.addMenu('&Update')
         add_menu = menu_bar.addMenu('&Add')
@@ -76,13 +79,19 @@ class Admin(QMainWindow):
         # Using & before a letter creates a quick keyboard Alt shortcut (e.g., Alt+F)
 
         c_r_menu = QMenu('&Customer Record',self)
-        c_r_action = QAction('&Purchase',self)
+        c_r_action = QAction('&Gold Purchase',self)
         c_r_action.setShortcut('Ctrl+R')                           
         c_r_action.triggered.connect(self.customer_record_function)  
 
-        c_r_s_action  = QAction('&Sell',self)
+        c_r_s_action  = QAction('& Gold Sell',self)
         c_r_s_action.setShortcut('Ctrl+Y')
         c_r_s_action.triggered.connect(self.customer_record_function)
+
+        c_r_si_action = QAction('&Silver Purchase',self)
+        c_r_si_action.triggered.connect(self.customer_record_function)
+
+        c_r_si_s_action = QAction('&Silver Sell',self)
+        c_r_si_s_action.triggered.connect(self.customer_record_function)
 
         gst_g_action = QAction('&Gold GST',self)
         gst_g_action.triggered.connect(self.customer_record_function)
@@ -94,9 +103,33 @@ class Admin(QMainWindow):
         c_r_menu.addSeparator()
         c_r_menu.addAction(c_r_s_action)
         c_r_menu.addSeparator()    
+        c_r_menu.addAction(c_r_si_action)
+        c_r_menu.addSeparator()
+        c_r_menu.addAction(c_r_si_s_action)
+        c_r_menu.addSeparator()
         c_r_menu.addAction(gst_g_action)
         c_r_menu.addSeparator()
         c_r_menu.addAction(gst_s_action)
+
+        g_b_d_action = QAction('&Gold purchase detail',self)
+        g_b_d_action.triggered.connect(self.customer_record_function)
+
+        g_s_d_action = QAction('&Gold sell detail',self)
+        g_s_d_action.triggered.connect(self.customer_record_function)
+
+        s_b_d_action = QAction('&Silver purchase detail',self)
+        s_b_d_action.triggered.connect(self.customer_record_function)
+
+        s_s_d_action = QAction('&Silver sell detail',self)
+        s_s_d_action.triggered.connect(self.customer_record_function)
+
+        detail_menu.addAction(g_b_d_action)
+        detail_menu.addSeparator()
+        detail_menu.addAction(g_s_d_action)
+        detail_menu.addSeparator()
+        detail_menu.addAction(s_b_d_action)
+        detail_menu.addSeparator()
+        detail_menu.addAction(s_s_d_action)
 
         s_r_action = QAction('&Stock Record', self)
         s_r_action.setShortcut('Ctrl+E')
@@ -110,9 +143,15 @@ class Admin(QMainWindow):
 
         # 4. Create actions for the 'Search' menu
 
-        search_action = QAction('&Records', self)
-        search_action.triggered.connect(self.search_function)
-        search_menu.addAction(search_action)
+        gst_action = QAction('&GST', self)
+        gst_action.triggered.connect(self.search_function)
+
+        bill_action = QAction('&Customer',self)
+        bill_action.triggered.connect(self.search_function)
+
+        search_menu.addAction(gst_action)
+        search_menu.addSeparator()
+        search_menu.addAction(bill_action)
 
         gold_rate = QAction('&Gold Rate',self)
         gold_rate.setShortcut('Ctrl+G')
@@ -148,6 +187,17 @@ class Admin(QMainWindow):
 
     # ---------------- EVENT LISTENERS FOR THE MENU OPTIONS --------------------------------
 
+    #--------------------------------Search for gst & customer bill-------------------------------------------
+
+    def search_table_function(self):
+        pass
+
+    def refresh_function(self):
+        pass
+
+    def search_reset_function(self):
+        pass
+
     def home_function(self):
         pass
     
@@ -164,10 +214,22 @@ class Admin(QMainWindow):
         else:
             return
         d = Detail()
-        if req == 'Purchase':
+        if req == 'Gold Purchase':
             m = d.show_table('buy')   
-        elif req == 'Sell':
+        elif req == 'Gold Sell':
             m = d.show_table('sell')
+        elif req == 'Silver Purchase':
+            m = d.show_table('buy_silver')
+        elif req == 'Silver Sell':
+            m = d.show_table('sell_silver')
+        elif req == 'Gold purchase detail':
+            m = d.show_table('buy_detail')
+        elif req == 'Gold sell detail':
+            m = d.show_table('sell_detail')
+        elif req == 'Silver purchase detail':
+            m = d.show_table('buy_silver_detail')
+        elif req == 'Silver sell detail':
+            m =d.show_table('sell_silver_detail')
         elif req == 'Gold GST':
             m = d.show_table('gst_gold')
         elif req == 'Silver GST':
@@ -180,7 +242,14 @@ class Admin(QMainWindow):
         self.stack_.setCurrentWidget(self.frame4)
 
     def search_function(self):
-        pass
+        temp = None
+        temp = self.sender()
+        text = temp.text()
+        req = text[1:]
+        if req == 'Customer':
+            self.stack_.setCurrentWidget(self.frame5)
+        else:
+            self.stack_.setCurrentWidget(self.frame6)
 
     def validate_text(self,value):
 
@@ -332,6 +401,12 @@ class Admin(QMainWindow):
         self.frame4 = QFrame()
         self.frame4.setFrameStyle(QFrame.Panel|QFrame.Plain)
         self.frame4.setLineWidth(2)
+        self.frame5 = QFrame()
+        self.frame5.setFrameStyle(QFrame.Panel|QFrame.Plain)
+        self.frame5.setLineWidth(2)
+        self.frame6 = QFrame()
+        self.frame5.setFrameStyle(QFrame.Panel|QFrame.Plain)
+        self.frame6.setLineWidth(2)
         self.gold_rate_label = QLabel('Enter Gold Rate')
         self.g_r_ = QLineEdit()
         self.g_r_.setPlaceholderText('Enter New Gold Rate')
@@ -372,10 +447,97 @@ class Admin(QMainWindow):
         layout4.addWidget(self.b)
         self.frame4.setLayout(layout4)
         main_layout = QVBoxLayout()
+        layout5 = QVBoxLayout()
+        category_layout = QHBoxLayout()
+        self.category_label = QLabel('Category :')
+        self.category = QComboBox()
+        self.category.addItems(['Gold','Silver'])
+        category_layout.addWidget(self.category_label,stretch=30)
+        category_layout.addWidget(self.category,stretch=70)
+        name_layout = QHBoxLayout()
+        self.name_label = QLabel('Name :')
+        self.name = QLineEdit()
+        name_layout.addWidget(self.name_label,stretch=30)
+        name_layout.addWidget(self.name,stretch=70)
+        bill_layout = QHBoxLayout()
+        self.billno_label = QLabel('Bill no. :')
+        self.billno = QLineEdit()
+        bill_layout.addWidget(self.billno_label,stretch=30)
+        bill_layout.addWidget(self.billno,stretch=70)
+        date_layout = QHBoxLayout()
+        self.date_label = QLabel('Date :')
+        self.datee = QDateEdit()
+        self.datee.setCalendarPopup(True)
+        self.datee.setDisplayFormat("dd-MM-yyyy")
+        din = date.today()
+        d = din.day
+        m = din.month
+        y = din.year
+        self.datee.setDate(QDate(y,m,d))
+        date_layout.addWidget(self.date_label,stretch=30)
+        date_layout.addWidget(self.datee,stretch=70)
+        button_layout = QHBoxLayout()
+        self.s_btn = QPushButton('Search')
+        self.s_btn.clicked.connect(self.search_table_function)
+        self.r_btn = QPushButton('Refresh')
+        self.r_btn.clicked.connect(self.refresh_function)
+        self.reset_btn = QPushButton('Reset')
+        self.reset_btn.clicked.connect(self.search_reset_function)
+        button_layout.addWidget(self.s_btn)
+        button_layout.addWidget(self.r_btn)
+        button_layout.addWidget(self.reset_btn)
+        result_table_layout = QVBoxLayout()
+        self.result_table = QTableView()
+        self.result_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.result_table.setItemDelegate(center_item)
+        result_table_layout.addWidget(self.result_table)
+        self.r_t_frame = QFrame()
+        self.r_t_frame.setFrameStyle(QFrame.Panel|QFrame.Plain)
+        self.r_t_frame.setLineWidth(2)
+        self.r_t_frame.setLayout(result_table_layout)
+        layout5.addLayout(category_layout)
+        layout5.addLayout(name_layout)
+        layout5.addLayout(bill_layout)
+        layout5.addLayout(date_layout)
+        layout5.addLayout(button_layout)
+        layout5.addWidget(self.r_t_frame)
+        self.frame5.setLayout(layout5)
+        layout6 = QVBoxLayout()
+        start_layout = QHBoxLayout()
+        self.start_date_label = QLabel('Start_Date :')
+        self.start_date = QDateEdit()
+        self.start_date.setCalendarPopup(True)
+        self.start_date.setDisplayFormat("dd-MM-yyyy")
+        self.start_date.setDate(QDate(y,m,d))
+        start_layout.addWidget(self.start_date_label,stretch=30)
+        start_layout.addWidget(self.start_date,stretch=70)
+        end_layout = QHBoxLayout()
+        self.end_date_label = QLabel('End_Date :')
+        self.end_date = QDateEdit()
+        self.end_date.setCalendarPopup(True)
+        self.end_date.setDisplayFormat("dd-MM-yyyy")
+        self.end_date.setDate(QDate(y,m,d))
+        end_layout.addWidget(self.end_date_label,stretch=30)
+        end_layout.addWidget(self.end_date,stretch=70)
+        c_layout = QHBoxLayout()
+        c_layout.addWidget(self.category_label,stretch=30)
+        c_layout.addWidget(self.category,stretch=70)
+        b_layout = QHBoxLayout()
+        b_layout.addWidget(self.s_btn)
+        b_layout.addWidget(self.r_btn)
+        b_layout.addWidget(self.reset_btn)
+        layout6.addLayout(c_layout)
+        layout6.addLayout(start_layout)
+        layout6.addLayout(end_layout)
+        layout6.addLayout(b_layout)
+        layout6.addWidget(self.r_t_frame)
+        self.frame6.setLayout(layout6)
         self.stack_.addWidget(self.frame1)
         self.stack_.addWidget(self.frame2)
         self.stack_.addWidget(self.frame3)
         self.stack_.addWidget(self.frame4)
+        self.stack_.addWidget(self.frame5)
+        self.stack_.addWidget(self.frame6)
         main_layout.addWidget(self.stack_)
         container_widget.setLayout(main_layout)
         self.setCentralWidget(container_widget)

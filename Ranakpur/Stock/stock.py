@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt ,QItemSelectionModel
+from PyQt5.QtCore import Qt ,QItemSelectionModel,QDate
 
 from PyQt5.QtSql import (QSqlDatabase, 
                          QSqlQuery,
@@ -424,6 +424,18 @@ class Detail(QMainWindow):
         elif table_name == 'sell_silver':
             self.sell_silver.select()
             return self.sell_silver
+        elif table_name == 'buy_detail':
+            self.buy_detail.select()
+            return self.buy_detail
+        elif table_name == 'sell_detail':
+            self.sell_detail.select()
+            return self.sell_detail
+        elif table_name == 'buy_silver_detail':
+            self.buy_silver_detail.select()
+            return self.buy_silver_detail
+        elif table_name == 'sell_silver_detail':
+            self.sell_silver_detail.select()
+            return self.sell_silver_detail
         elif table_name == 'gst_gold':
             self.gst_gold.select()
             return self.gst_gold
@@ -433,6 +445,12 @@ class Detail(QMainWindow):
         else:
             return
 
+    def search_gst(self,table_name):
+        pass
+
+    def search_customer(self,table_name):
+        pass
+    
 
 if __name__ == '__main__':
     app =QApplication([])
