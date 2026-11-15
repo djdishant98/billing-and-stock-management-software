@@ -190,8 +190,35 @@ class Admin(QMainWindow):
     #--------------------------------Search for gst & customer bill-------------------------------------------
 
     def search_table_function(self):
-        pass
+        frame = self.stack_.currentWidget()
+        c = self.category.currentText()
+        m = QSqlTableModel()
+        if frame is self.frame5:
+            a = self.name.text().strip()
+            b = self.billno.text().strip()
+            d = self.datee.date().toString('yyyy-MM-dd')
+            if 
 
+        elif frame is self.frame6:
+            a = self.start_date.date().toString('yyyy-MM-dd')
+            b = self.end_date.date().toString('yyyy-MM-dd')
+            if c == 'Gold':
+                m.setTable('gst_gold')
+                m.select()
+                self.result_t.setModel(m)
+                expression = "substr(date,7,4)|| '-' ||substr(date,4,2)|| '-' ||substr(date,1,2)"
+                m.setFilter(f"{expression} BETWEEN '{a}' AND '{b}'")
+                m.select()
+            else:
+                m.setTable('gst_silver')
+                m.select()
+                self.result_t.setModel(m)
+                expression = "substr(date,7,4)|| '-' ||substr(date,4,2)|| '-' ||substr(date,1,2)"
+                m.setFilter(f"{expression} BETWEEN '{a}' AND '{b}'")
+                m.select()          
+        else:
+            return
+        
     def refresh_function(self):
         pass
 
@@ -246,6 +273,10 @@ class Admin(QMainWindow):
         temp = self.sender()
         text = temp.text()
         req = text[1:]
+        m = QSqlTableModel()
+        m.select()
+        m.clear()
+        self.result_table.setModel(m)
         if req == 'Customer':
             self.stack_.setCurrentWidget(self.frame5)
         else:
@@ -503,6 +534,12 @@ class Admin(QMainWindow):
         layout5.addWidget(self.r_t_frame)
         self.frame5.setLayout(layout5)
         layout6 = QVBoxLayout()
+        cat_l = QHBoxLayout()
+        self.cat_label = QLabel()
+        self.cat = QComboBox()
+        self.cat.addItems(['Gold','Silver'])
+        cat_l.addWidget(self.cat_label,stretch=30)
+        cat_l.addWidget(self.cat,stretch=70)
         start_layout = QHBoxLayout()
         self.start_date_label = QLabel('Start_Date :')
         self.start_date = QDateEdit()
@@ -519,18 +556,20 @@ class Admin(QMainWindow):
         self.end_date.setDate(QDate(y,m,d))
         end_layout.addWidget(self.end_date_label,stretch=30)
         end_layout.addWidget(self.end_date,stretch=70)
-        c_layout = QHBoxLayout()
-        c_layout.addWidget(self.category_label,stretch=30)
-        c_layout.addWidget(self.category,stretch=70)
+        r_l = QVBoxLayout()
+        self.result_t = QTableView()
+        self.result_t.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.result_t.setItemDelegate(center_item)
+        r_l.addWidget(self.result_t)
         b_layout = QHBoxLayout()
         b_layout.addWidget(self.s_btn)
         b_layout.addWidget(self.r_btn)
         b_layout.addWidget(self.reset_btn)
-        layout6.addLayout(c_layout)
+        layout6.addLayout(cat_l)
         layout6.addLayout(start_layout)
         layout6.addLayout(end_layout)
         layout6.addLayout(b_layout)
-        layout6.addWidget(self.r_t_frame)
+        layout6.addLayout(r_l)
         self.frame6.setLayout(layout6)
         self.stack_.addWidget(self.frame1)
         self.stack_.addWidget(self.frame2)
