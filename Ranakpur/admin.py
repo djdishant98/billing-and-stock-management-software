@@ -193,37 +193,69 @@ class Admin(QMainWindow):
         frame = self.stack_.currentWidget()
         c = self.category.currentText()
         m = QSqlTableModel()
+        self.item = self.search_.currentText()
+        center_item = AlignedItem(Qt.AlignmentFlag.AlignCenter)
         if frame is self.frame5:
-            a = self.name.text().strip()
+            a = self.name.text().strip().lower().replace("'","''")
             b = self.billno.text().strip()
-            d = self.datee.date().toString('yyyy-MM-dd')
-            if 
-
+            b = int(b)
+            d = self.datee.date().toString('dd-MM-yyyy')
+            if c == 'Gold':
+                m.setTable('buy')
+            else:
+                m.setTable('buy_silver')
+            m.select()
+            self.result_table.setModel(m)
+            self.result_table.setItemDelegate(center_item)
+            if self.item == 'Name' or self.item == 'name':
+                m.setFilter(f"LOWER(name) LIKE '%{a}%'")
+            elif self.item == 'Bill number' or self.item == 'Bill number' or self.item == 'billno':
+                m.setFilter(f"bill_no LIKE '%{b}%'")
+            elif self.item == 'Date' or self.item == 'date':
+                m.setFilter(f"date LIKE '%{d}%'")
+            else:
+                return
+            m.select()
         elif frame is self.frame6:
             a = self.start_date.date().toString('yyyy-MM-dd')
             b = self.end_date.date().toString('yyyy-MM-dd')
             if c == 'Gold':
                 m.setTable('gst_gold')
                 m.select()
-                self.result_t.setModel(m)
-                expression = "substr(date,7,4)|| '-' ||substr(date,4,2)|| '-' ||substr(date,1,2)"
-                m.setFilter(f"{expression} BETWEEN '{a}' AND '{b}'")
-                m.select()
             else:
                 m.setTable('gst_silver')
                 m.select()
-                self.result_t.setModel(m)
-                expression = "substr(date,7,4)|| '-' ||substr(date,4,2)|| '-' ||substr(date,1,2)"
-                m.setFilter(f"{expression} BETWEEN '{a}' AND '{b}'")
-                m.select()          
+            self.result_t.setModel(m)
+            self.result_t.setItemDelegate(center_item)
+            expression = "substr(date,7,4)|| '-' ||substr(date,4,2)|| '-' ||substr(date,1,2)"
+            m.setFilter(f"{expression} BETWEEN '{a}' AND '{b}'")
+            m.select()          
         else:
             return
         
     def refresh_function(self):
-        pass
+        self.search_reset_function()
+        self.result_table.setModel(None)
+        self.result_t.setModel(None)
 
     def search_reset_function(self):
-        pass
+        current_widget = self.stack_.currentWidget()
+        if current_widget == self.frame5:
+            self.category.setCurrentIndex(0)
+            self.search_.setCurrentIndex(-1)
+            self.name_label.hide()
+            self.name.clear()
+            self.name.hide()
+            self.billno_label.hide()
+            self.billno.clear()
+            self.billno.hide()
+            self.datee.setDate(self.temp_date)
+            self.date_label.hide()
+            self.datee.hide()
+        else:
+            self.cat.setCurrentIndex(0)
+            self.start_date.setDate(self.temp_date)
+            self.end_date.setDate(self.temp_date)
 
     def home_function(self):
         pass
@@ -235,6 +267,7 @@ class Admin(QMainWindow):
         t.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         m = QSqlTableModel()
         m.clear()
+        center_item = AlignedItem(Qt.AlignmentFlag.AlignCenter)
         if category is not None:
             name = category.text()
             req = name[1:]
@@ -262,6 +295,7 @@ class Admin(QMainWindow):
         elif req == 'Silver GST':
             m = d.show_table('gst_silver')
         t.setModel(m)
+        t.setItemDelegate(center_item)
         self.stack_.addWidget(t)
         self.stack_.setCurrentWidget(t)
 
@@ -281,6 +315,41 @@ class Admin(QMainWindow):
             self.stack_.setCurrentWidget(self.frame5)
         else:
             self.stack_.setCurrentWidget(self.frame6)
+
+    #------------------------Combobox event slot---------------------------------------------------
+
+    def show_search_list(self):
+        self.item = ''
+        select_item = self.search_.currentText()
+        self.item = select_item
+        if select_item == 'Name' or select_item == 'name':
+            self.name.show()
+            self.name_label.show()
+            self.billno.hide()
+            self.billno_label.hide()
+            self.date_label.hide()
+            self.datee.hide()
+        elif select_item == 'Bill number' or select_item == 'bill number' or select_item == 'billno':
+            self.billno_label.show()
+            self.billno.show()
+            self.name_label.hide()
+            self.name.hide()
+            self.date_label.hide()
+            self.datee.hide()
+        elif select_item == 'Date' or select_item == 'date':
+            self.date_label.show()
+            self.datee.show()
+            self.name.hide()
+            self.name_label.hide()
+            self.billno.hide()
+            self.billno_label.hide()
+        else:
+            self.name_label.hide()
+            self.name.hide()
+            self.date_label.hide()
+            self.datee.hide()
+            self.billno_label.hide()
+            self.billno.hide()
 
     def validate_text(self,value):
 
@@ -485,16 +554,30 @@ class Admin(QMainWindow):
         self.category.addItems(['Gold','Silver'])
         category_layout.addWidget(self.category_label,stretch=30)
         category_layout.addWidget(self.category,stretch=70)
+        search_by_layout = QHBoxLayout()
+        self.search_label = QLabel('Search by :')
+        self.search_ = QComboBox()
+        self.search_.setEditable(True)
+        self.search_.lineEdit().setPlaceholderText('Select from list')
+        self.search_.addItems(['Name','Bill number','Date'])
+        self.search_.setCurrentIndex(-1)
+        self.search_.currentTextChanged.connect(self.show_search_list)
+        search_by_layout.addWidget(self.search_label,stretch=30)
+        search_by_layout.addWidget(self.search_,stretch=70)
         name_layout = QHBoxLayout()
         self.name_label = QLabel('Name :')
         self.name = QLineEdit()
         name_layout.addWidget(self.name_label,stretch=30)
         name_layout.addWidget(self.name,stretch=70)
+        self.name_label.hide()
+        self.name.hide()
         bill_layout = QHBoxLayout()
         self.billno_label = QLabel('Bill no. :')
         self.billno = QLineEdit()
         bill_layout.addWidget(self.billno_label,stretch=30)
         bill_layout.addWidget(self.billno,stretch=70)
+        self.billno_label.hide()
+        self.billno.hide()
         date_layout = QHBoxLayout()
         self.date_label = QLabel('Date :')
         self.datee = QDateEdit()
@@ -504,19 +587,32 @@ class Admin(QMainWindow):
         d = din.day
         m = din.month
         y = din.year
-        self.datee.setDate(QDate(y,m,d))
+        self.temp_date = QDate(y,m,d)
+        self.datee.setDate(self.temp_date)
         date_layout.addWidget(self.date_label,stretch=30)
         date_layout.addWidget(self.datee,stretch=70)
+        self.date_label.hide()
+        self.datee.hide()
         button_layout = QHBoxLayout()
+        button_layout_6 = QHBoxLayout()
         self.s_btn = QPushButton('Search')
+        self.ss_btn = QPushButton('Search')
         self.s_btn.clicked.connect(self.search_table_function)
+        self.ss_btn.clicked.connect(self.search_table_function)
         self.r_btn = QPushButton('Refresh')
+        self.rr_btn = QPushButton('Refresh')
         self.r_btn.clicked.connect(self.refresh_function)
+        self.rr_btn.clicked.connect(self.refresh_function)
         self.reset_btn = QPushButton('Reset')
+        self.resett_btn = QPushButton('Reset')
         self.reset_btn.clicked.connect(self.search_reset_function)
+        self.resett_btn.clicked.connect(self.search_reset_function)
         button_layout.addWidget(self.s_btn)
         button_layout.addWidget(self.r_btn)
         button_layout.addWidget(self.reset_btn)
+        button_layout_6.addWidget(self.ss_btn)
+        button_layout_6.addWidget(self.rr_btn)
+        button_layout_6.addWidget(self.resett_btn)
         result_table_layout = QVBoxLayout()
         self.result_table = QTableView()
         self.result_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -527,6 +623,7 @@ class Admin(QMainWindow):
         self.r_t_frame.setLineWidth(2)
         self.r_t_frame.setLayout(result_table_layout)
         layout5.addLayout(category_layout)
+        layout5.addLayout(search_by_layout)
         layout5.addLayout(name_layout)
         layout5.addLayout(bill_layout)
         layout5.addLayout(date_layout)
@@ -561,14 +658,10 @@ class Admin(QMainWindow):
         self.result_t.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.result_t.setItemDelegate(center_item)
         r_l.addWidget(self.result_t)
-        b_layout = QHBoxLayout()
-        b_layout.addWidget(self.s_btn)
-        b_layout.addWidget(self.r_btn)
-        b_layout.addWidget(self.reset_btn)
         layout6.addLayout(cat_l)
         layout6.addLayout(start_layout)
         layout6.addLayout(end_layout)
-        layout6.addLayout(b_layout)
+        layout6.addLayout(button_layout_6)
         layout6.addLayout(r_l)
         self.frame6.setLayout(layout6)
         self.stack_.addWidget(self.frame1)
