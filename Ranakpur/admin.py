@@ -198,7 +198,8 @@ class Admin(QMainWindow):
         if frame is self.frame5:
             a = self.name.text().strip().lower().replace("'","''")
             b = self.billno.text().strip()
-            b = int(b)
+            if b != '' :
+                b = int(b)
             d = self.datee.date().toString('dd-MM-yyyy')
             if c == 'Gold':
                 m.setTable('buy')

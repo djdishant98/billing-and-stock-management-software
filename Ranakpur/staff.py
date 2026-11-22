@@ -17,13 +17,16 @@ from PyQt5.QtWidgets import (QApplication,
                              QHeaderView,
                              QStackedWidget,
                              QAction,
-                             QScrollArea
+                             QScrollArea,
+                             QSizePolicy
                              )
 from PyQt5.QtGui import (QFont,
                          QStandardItemModel, 
                          QStandardItem,
                          QBrush,
-                         QColor)
+                         QColor,
+                         QPainter)
+from PyQt5.QtPrintSupport import QPrinter,QPrintDialog
 from PyQt5.QtSql import QSqlTableModel , QSqlQuery , QSqlDatabase
 #from Stock.stock import Bill
 import json
@@ -376,6 +379,10 @@ class Pilot(QMainWindow):
 
         #--------------------------------Creating Bill Print layout---------------------------
     def p_widget_function(self):
+        temp_widget = QWidget()
+        self.final_print_btn = QPushButton('Print')
+        self.final_print_btn.clicked.connect(self.final_bill_print)
+        self.final_layout = QVBoxLayout()
         self.p = QWidget()
         frame1 = QFrame()
         frame1.setFrameStyle(QFrame.Panel | QFrame.Plain)
@@ -386,6 +393,8 @@ class Pilot(QMainWindow):
         frame3 = QFrame()
         frame3.setFrameStyle(QFrame.Panel | QFrame.Plain)
         frame3.setLineWidth(2)
+        for fr in (frame1,frame2,frame3):
+            fr.setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Fixed)
         self.label1 = QLabel("Ranakpur Jewellers")
         self.label2 = QLabel(self.address)
         self.label3 = QLabel(self.contact)
@@ -433,7 +442,6 @@ class Pilot(QMainWindow):
         frame1.setLayout(layout1)
         frame2.setLayout(layout2)
         layout3 = QVBoxLayout()
-        layout3.addWidget(self.label5,alignment=Qt.AlignmentFlag.AlignCenter)
         self.v = QTableView()
         self.v.setShowGrid(False)
         self.v.setContentsMargins(30,30,30,30)
@@ -448,11 +456,15 @@ class Pilot(QMainWindow):
         b_final_layout = QVBoxLayout()
         b_final_layout.addWidget(frame1)
         b_final_layout.addWidget(frame2)
+        b_final_layout.addWidget(self.label5,alignment=Qt.AlignmentFlag.AlignCenter)
         b_final_layout.addLayout(layout3)
         b_final_layout.addWidget(frame3)
         self.p.setLayout(b_final_layout)
-        self.stack_.addWidget(self.p)
-        self.stack_.setCurrentWidget(self.p)
+        self.final_layout.addWidget(self.p)
+        self.final_layout.addWidget(self.final_print_btn)
+        temp_widget.setLayout(self.final_layout)
+        self.stack_.addWidget(temp_widget)
+        self.stack_.setCurrentWidget(temp_widget)
 
     #----------------------Establishing Database Connection----------------
 
@@ -552,12 +564,12 @@ class Pilot(QMainWindow):
         d=self.model.item(13,8)
         e=self.model.item(14,8)
         if (a and b and c and d and e) is not None:
-            self.model.item(10,7).clearData()
+            #self.model.item(10,7).clearData()
             self.model.item(11,7).clearData()
             self.model.item(12,7).clearData()
             self.model.item(13,7).clearData()
             self.model.item(14,7).clearData()
-            self.model.item(10,8).clearData()
+            #self.model.item(10,8).clearData()
             self.model.item(11,8).clearData()
             self.model.item(12,8).clearData()
             self.model.item(13,8).clearData()
@@ -797,8 +809,66 @@ class Pilot(QMainWindow):
             mode = self.payment_mode.currentText()
             self.model.setItem(15,8,QStandardItem(mode))
             self.p_widget_function()
+
         else:
             self.validate_msg("Enter the necessary details\nEnter all fields")
+
+    #------------------------function to print bill in printer----------------------------------------
+
+    def final_bill_print(self):
+        printer = QPrinter(QPrinter.HighResolution)
+        printer.setPageSize(QPrinter.A4)
+        dialog = QPrintDialog(printer,self)
+        if dialog.exec_() == QPrintDialog.Accepted:
+            painter = QPainter(printer)
+             # Replace 'self.b.table' with the exact attribute name of your QTableView inside Bill
+            table = self.v
+
+            # 1. Save original sizes and scrollbar policies so we can restore them after printing
+            orig_widget_size = self.p.size()
+            orig_table_min_h = table.minimumHeight()
+            orig_table_max_h = table.maximumHeight()
+            orig_v_scroll = table.verticalScrollBarPolicy()
+            orig_h_scroll = table.horizontalScrollBarPolicy()
+
+            # 2. Calculate the exact height needed to show the header + EVERY row
+            header_height = table.horizontalHeader().height()
+            rows_height = sum(table.rowHeight(r) for r in range(table.model().rowCount()))
+            frame_margins = table.frameWidth() * 2
+            full_table_height = header_height + rows_height + frame_margins + 10
+
+            self.final_layout.removeWidget(self.p)
+            self.p.setParent(None)
+
+            # 3. Temporarily hide scrollbars and expand the table & Bill widget
+            table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            table.setFixedHeight(full_table_height)
+
+            # Calculate how much taller the Bill widget needs to grow to fit the expanded table
+            """extra_height = max(0,full_table_height-table.height())
+            self.p.resize(orig_widget_size.width(), orig_widget_size.height() + extra_height)
+            self.p.layout().activate()  # Force layout to recalculate positions immediately"""
+
+            self.p.adjustSize()
+            full_bill_height = self.p.sizeHint().height()
+            self.p.resize(orig_widget_size.width(), full_bill_height)
+            self.p.layout().activate()
+            QApplication.processEvents()
+            page_rect = printer.pageRect(QPrinter.DevicePixel)
+            scale = min(page_rect.width()/self.p.width(),
+                        page_rect.height()/self.p.height())
+            painter.scale(scale,scale)
+            self.p.render(painter)
+            painter.end()
+            # 5. Restore original scrollable sizes on screen
+            table.setMinimumHeight(orig_table_min_h)
+            table.setMaximumHeight(orig_table_max_h)
+            table.setVerticalScrollBarPolicy(orig_v_scroll)
+            table.setHorizontalScrollBarPolicy(orig_h_scroll)
+            self.final_layout.insertWidget(0,self.p)
+            self.p.resize(orig_widget_size)
+            self.p.layout().activate()
 
     #-----------------------function to clear fields after printing to table-----------------
 
