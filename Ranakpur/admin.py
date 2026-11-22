@@ -44,6 +44,13 @@ class Admin(QMainWindow):
             sys.exit(1)
         self.create_menu_bar()
         self.set_layout()
+        self.setStyleSheet("""QHeaderView::section {
+                            background-color: #2C3E50;
+                            color: #FFFFFF;
+                            font-weight: bold;
+                            padding: 6px;
+                            border: 1px solid #1A252F;
+                        }""")
         self.showMaximized()
 
     def create_menu_bar(self):

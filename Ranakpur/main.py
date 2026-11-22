@@ -147,6 +147,11 @@ class User(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication([])
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    qss_path = os.path.join(base_dir,"Style", "style.qss")
+    # Load and apply style.qss to ALL windows, frames, and imported classes
+    with open(qss_path, "r") as f:
+        app.setStyleSheet(f.read())
     u = User()
     u.show()
     app.exec_()
