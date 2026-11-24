@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import (QWidget,
                              QHBoxLayout,
                              QLineEdit,
                              QDesktopWidget,
-                             QMessageBox)
+                             QMessageBox,
+                             QStackedWidget)
 
 from PyQt5.QtCore import Qt
 from pathlib import Path
@@ -21,20 +22,18 @@ class User(QMainWindow):
         super().__init__()
         self.a = QPushButton('Admin')
         self.s = QPushButton('Staff')
-        c = QWidget()
+        self.c = QWidget()
+        self.stack = QStackedWidget()
         l = QHBoxLayout()
         l.addWidget(self.a)
         l.addWidget(self.s)
-        c.setLayout(l)
-        self.setCentralWidget(c)
+        self.c.setLayout(l)
+        self.stack.addWidget(self.c)
+        self.stack.setCurrentWidget(self.c)
+        self.setCentralWidget(self.stack)
         self.showMaximized()
-        self.setStyleSheet("""
-                                QPushButton{
-                                width:50px;
-                                height:50px;
-                                background:#0a6ba0;
-                                font:50px}""")
         self.second_win = None
+        
     #--------------------------Adding events to button-------------------------------
 
         self.a.clicked.connect(self.admin_function)
@@ -43,7 +42,7 @@ class User(QMainWindow):
     #--------------------------layout for admin widget------------------------------
 
     def admin_layout(self):
-         c1 = QWidget()
+         self.c1 = QWidget()
          self.n_l = QLabel('Username')
          self.n_ = QLineEdit()
          self.p_l = QLabel('Password')
@@ -60,9 +59,10 @@ class User(QMainWindow):
          f_layout.addLayout(p_layout)
          f_layout.addWidget(self.e_btn)
          self.e_btn.clicked.connect(self.admin_win_function)
-         c1.setLayout(f_layout)
+         self.c1.setLayout(f_layout)
          self.showNormal()
-         self.setCentralWidget(c1)
+         self.stack.addWidget(self.c1)
+         self.stack.setCurrentWidget(self.c1)
          self.resize(500,500)
          self.center_screen_function()
 
@@ -85,7 +85,10 @@ class User(QMainWindow):
 
         if self.second_win is None:
             self.second_win = Pilot()
-            self.second_win.show()
+            self.second_win.home.connect(self.back_home)
+            self.stack.addWidget(self.second_win)
+            self.stack.setCurrentWidget(self.second_win)
+            self.showMaximized()
 
     #-----------------------function to enter admin window--------------------------------
 
@@ -130,8 +133,10 @@ class User(QMainWindow):
                 msg.exec_()
                 if self.second_win is None:                           #displaying admin window
                     self.second_win = Admin()
-                    self.hide()
-                    self.second_win.show()
+                    self.second_win.home.connect(self.back_home)
+                    self.stack.addWidget(self.second_win)
+                    self.stack.setCurrentWidget(self.second_win)
+                    self.showMaximized()
                     True
 
             else:
@@ -143,7 +148,15 @@ class User(QMainWindow):
                 msg.setText('Enter correct details')
                 msg.exec_()
 
-                
+    #---------------------------Event listener for signal emitted from Admin and Pilot class---------------------------
+
+    def back_home(self):
+        if self.second_win is not None:
+            self.stack.removeWidget(self.second_win)
+            self.second_win.deleteLater()           # Clean up memory so next login starts fresh
+            self.second_win = None
+        self.stack.setCurrentWidget(self.c)
+        self.showMaximized()
 
 if __name__ == '__main__':
     app = QApplication([])

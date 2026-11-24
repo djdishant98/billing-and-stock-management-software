@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt , QAbstractTableModel
+from PyQt5.QtCore import Qt , QAbstractTableModel , pyqtSignal
 from PyQt5.QtWidgets import (QApplication,
                              QWidget,
                              QLabel,
@@ -51,6 +51,7 @@ from Stock.db import Db_Manager
         return len(self._data[0])"""
 
 class Pilot(QMainWindow):
+    home = pyqtSignal()
     def __init__(self):
         super().__init__()
         self.b_d = Db_Manager()
@@ -79,6 +80,8 @@ class Pilot(QMainWindow):
                     self.gst = self.data.get("GST")
                     self.g_bill = self.data.get("G_Bill_No")
                     self.s_bill = self.data.get("S_Bill_No")
+                    self.n_g_bill = self.data.get("G_Bill_No_N")
+                    self.n_s_bill = self.data.get("S_Bill_No_N")
 
             except json.JSONDecodeError:
                 print("Json file is corrupted")
@@ -88,6 +91,9 @@ class Pilot(QMainWindow):
 #------------------------------Creating main Layout-------------------------------------------
 
         #--------------------Creating widgets for layout desigining----------------
+        self.gold_no = self.n_g_bill                            #setting to non gst bill no.
+        self.silver_no = self.n_s_bill
+        self.setter = 0
         self.main_scroll = QScrollArea()
         self.main_scroll.setWidgetResizable(True)
         self.container_widget = QWidget()  
@@ -306,8 +312,13 @@ class Pilot(QMainWindow):
 
     def create_menu_bar(self):
         menu_bar = self.menuBar()
+        home_menu = menu_bar.addMenu('&Home')
         file_menu = menu_bar.addMenu('&Category')
         exit_menu = menu_bar.addMenu('&Exit')
+
+        home_action = QAction('&Home',self)
+        home_action.triggered.connect(self.back_home)
+        home_menu.addAction(home_action)
 
         purchase_action = QAction('&Purchase',self)
         purchase_action.setShortcut('Ctrl+D')
@@ -333,16 +344,25 @@ class Pilot(QMainWindow):
         else:
             try:
                 if self.orna == 'GOLD':
-                    self.data["G_Bill_No"] = bill_no
+                    if self.setter == 1:
+                        self.data["G_Bill_No"] = bill_no
+                    else:
+                        self.data["G_Bill_N0_N"] = bill_no
                 else:
-                    self.data["S_Bill_No"] = bill_no
+                    if self.setter == 1:
+                        self.data["S_Bill_No"] = bill_no
+                    else:
+                        self.data["S_Bill_No_N"] = bill_no
                 with open(str(config_path),'w') as file1:
                     json.dump(self.data,file1,indent=4)
             except json.JSONDecodeError:
                     print("Json file is corrupted")
                     return False
 
-    #------------------------------Event listeners of menubar-------------------------------
+    #------------------------------Event listeners of menubar-------------------------------------------
+
+    def back_home(self):
+        self.home.emit()
 
     def purchase_function(self):
         self.reset_function()                                   #Clears the screen
@@ -401,9 +421,9 @@ class Pilot(QMainWindow):
         self.label4 = QLabel(self.gst)
         self.billno_label = QLabel('Bill no.:')
         if self.orna == 'GOLD':
-            self.billno = QLabel(str(self.g_bill))
+            self.billno = QLabel(str(self.gold_no))
         else:
-            self.billno = QLabel(str(self.s_bill))
+            self.billno = QLabel(str(self.silver_no))
         self.label5 = QLabel('GOLD/SILVER PURCHASE')
         self.label6 = QLabel('Name:')
         self.label6_1 = QLabel(self.cus_name.text())
@@ -558,6 +578,8 @@ class Pilot(QMainWindow):
     #----------------------function to create GST bill--------------------------------
 
     def create_GST_function(self):
+        self.gold_no = self.g_bill
+        self.silver_no = self.s_bill
         a=self.model.item(10,8)
         b=self.model.item(11,8)
         c=self.model.item(12,8)
@@ -616,6 +638,7 @@ class Pilot(QMainWindow):
             self.model.setItem(12,8,item9)
             self.model.setItem(13,8,item10)
             self.model.setItem(14,8,item11)
+            self.setter = 1
 
     #----------------------function to print bill-------------------------------------
 
@@ -779,11 +802,11 @@ class Pilot(QMainWindow):
                 item12 = str(m.data(m.index(12,8))).strip()                        #CGST
                 item13 = str(m.data(m.index(11,8))).strip()                        #SGST
                 if self.orna == 'GOLD':
-                    self.b_d.insert_into_buy(self.g_bill,a,c,b,d,item10,self.discount.text(),self.payment_mode.currentText(),self.date_.text())
-                    self.b_d.insert_into_gst_gold(self.g_bill,item13,item12,item11,self.date_.text())
+                    self.b_d.insert_into_buy(self.gold_no,a,c,b,d,item10,self.discount.text(),self.payment_mode.currentText(),self.date_.text())
+                    self.b_d.insert_into_gst_gold(self.gold_no,item13,item12,item11,self.date_.text())
                 else:
-                    self.b_d.insert_into_buy_silver(self.s_bill,a,c,b,d,item10,self.discount.text(),self.payment_mode.currentText(),self.date_.text())
-                    self.b_d.insert_into_gst_silver(self.s_bill,item13,item12,item11,self.date_.text())
+                    self.b_d.insert_into_buy_silver(self.silver_no,a,c,b,d,item10,self.discount.text(),self.payment_mode.currentText(),self.date_.text())
+                    self.b_d.insert_into_gst_silver(self.silver_no,item13,item12,item11,self.date_.text())
                 for r in range(count):
                     item1 = str(m.data(m.index(r,0))).strip()                       #Product
                     item2 = str(m.data(m.index(r,1))).strip()                       #carat/purity
@@ -796,14 +819,14 @@ class Pilot(QMainWindow):
                     item9 = str(m.data(m.index(r,8))).strip()                       #amount
                     if item1 != 'None' and item3 != 'None':
                         if self.orna == 'GOLD':
-                            self.b_d.insert_into_buy_detail(self.g_bill,item1,item2,item3,item4,item5,item6,item7,item8,item9,self.date_.text())
+                            self.b_d.insert_into_buy_detail(self.gold_no,item1,item2,item3,item4,item5,item6,item7,item8,item9,self.date_.text())
                         else:
-                            self.b_d.insert_into_buy_silver_detail(self.s_bill,item1,item2,item3,item4,item5,item6,item7,item8,item9,self.date_.text())        
+                            self.b_d.insert_into_buy_silver_detail(self.silver_no,item1,item2,item3,item4,item5,item6,item7,item8,item9,self.date_.text())        
             if self.orna == 'GOLD':
-                bill_no = int(self.g_bill) + 1
+                bill_no = int(self.gold_no) + 1
                 self.write_config(bill_no)
             else:
-                bill_no =int(self.s_bill) + 1
+                bill_no =int(self.silver_no) + 1
                 self.write_config(bill_no)
             self.model.setItem(15,7,QStandardItem('Payment mode'))
             mode = self.payment_mode.currentText()
@@ -1354,8 +1377,8 @@ class Sell(QWidget):
         msg.exec_()
         return True 
 
-if __name__ == '__main__':
+""" if __name__ == '__main__':
     app = QApplication([])
     p = Pilot()
     p.show()
-    app.exec_()
+    app.exec_() """

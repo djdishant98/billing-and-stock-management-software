@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (QApplication,
                              QDateEdit
                              )
 
-from PyQt5.QtCore import Qt ,QDate
+from PyQt5.QtCore import Qt ,QDate , pyqtSignal
 from PyQt5.QtGui import (QFont,
                          QStandardItemModel, 
                          QStandardItem,
@@ -38,6 +38,8 @@ from Stock.stock import Bill , Detail
 from Stock.db import Db_Manager
 
 class Admin(QMainWindow):
+
+    home = pyqtSignal()
     def __init__(self):
         super().__init__()
         if self.init_db() is False:
@@ -73,7 +75,6 @@ class Admin(QMainWindow):
         """)
         # 2. Add top-level menu categories
         home_menu = menu_bar.addMenu('&Home')
-        home_menu.triggered.connect(self.home_function)
         file_menu = menu_bar.addMenu('&File')
         detail_menu =menu_bar.addMenu('&Details')
         search_menu = menu_bar.addMenu('&Search')
@@ -84,6 +85,10 @@ class Admin(QMainWindow):
 
         # 3. Create clickable Actions for the 'File' menu
         # Using & before a letter creates a quick keyboard Alt shortcut (e.g., Alt+F)
+
+        h_action = QAction('&Home',self)
+        h_action.triggered.connect(self.home_function)
+        home_menu.addAction(h_action)
 
         c_r_menu = QMenu('&Customer Record',self)
         c_r_action = QAction('&Gold Purchase',self)
@@ -199,7 +204,9 @@ class Admin(QMainWindow):
     def search_table_function(self):
         frame = self.stack_.currentWidget()
         c = self.category.currentText()
+        c1 = self.cat.currentText()
         m = QSqlTableModel()
+        m.clear()
         self.item = self.search_.currentText()
         center_item = AlignedItem(Qt.AlignmentFlag.AlignCenter)
         if frame is self.frame5:
@@ -227,12 +234,11 @@ class Admin(QMainWindow):
         elif frame is self.frame6:
             a = self.start_date.date().toString('yyyy-MM-dd')
             b = self.end_date.date().toString('yyyy-MM-dd')
-            if c == 'Gold':
+            if c1 == 'Gold':
                 m.setTable('gst_gold')
-                m.select()
             else:
                 m.setTable('gst_silver')
-                m.select()
+            m.select()
             self.result_t.setModel(m)
             self.result_t.setItemDelegate(center_item)
             expression = "substr(date,7,4)|| '-' ||substr(date,4,2)|| '-' ||substr(date,1,2)"
@@ -266,7 +272,7 @@ class Admin(QMainWindow):
             self.end_date.setDate(self.temp_date)
 
     def home_function(self):
-        pass
+        self.home.emit()
     
     def customer_record_function(self):
         category = None
@@ -640,7 +646,7 @@ class Admin(QMainWindow):
         self.frame5.setLayout(layout5)
         layout6 = QVBoxLayout()
         cat_l = QHBoxLayout()
-        self.cat_label = QLabel()
+        self.cat_label = QLabel('Category :')
         self.cat = QComboBox()
         self.cat.addItems(['Gold','Silver'])
         cat_l.addWidget(self.cat_label,stretch=30)
@@ -692,8 +698,8 @@ class AlignedItem(QStyledItemDelegate):
         # Override the default text alignment for this cell/column
         option.displayAlignment = self.alignment
 
-if __name__ == '__main__':
+""" if __name__ == '__main__':
     app =QApplication([])
     a = Admin()
     a.show()
-    app.exec_()
+    app.exec_() """

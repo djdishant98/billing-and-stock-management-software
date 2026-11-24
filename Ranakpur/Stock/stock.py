@@ -452,8 +452,8 @@ class Detail(QMainWindow):
         pass
     
 
-if __name__ == '__main__':
+""" if __name__ == '__main__':
     app =QApplication([])
     b = Bill()
     b.show()
-    app.exec_()
+    app.exec_() """
