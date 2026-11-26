@@ -185,7 +185,7 @@ class Admin(QMainWindow):
 
         add_menu.addAction(add_p_d)
 
-        remove_p_d = QAction('&Remove Product',self)
+        remove_p_d = QAction('&Remove Product',self) 
         remove_p_d.triggered.connect(self.remove_product_function)
 
         remove_menu.addAction(remove_p_d)
@@ -217,8 +217,12 @@ class Admin(QMainWindow):
             d = self.datee.date().toString('dd-MM-yyyy')
             if c == 'Gold':
                 m.setTable('buy')
+                field = m.fieldIndex('bill_no')
+                m.setSort(field,Qt.DescendingOrder)
             else:
                 m.setTable('buy_silver')
+                field = m.fieldIndex('bill_no')
+                m.setSort(field,Qt.DescendingOrder)
             m.select()
             self.result_table.setModel(m)
             self.result_table.setItemDelegate(center_item)
@@ -238,6 +242,8 @@ class Admin(QMainWindow):
                 m.setTable('gst_gold')
             else:
                 m.setTable('gst_silver')
+            field = m.fieldIndex('bill_no')
+            m.setSort(field,Qt.DescendingOrder)
             m.select()
             self.result_t.setModel(m)
             self.result_t.setItemDelegate(center_item)
@@ -289,7 +295,7 @@ class Admin(QMainWindow):
             return
         d = Detail()
         if req == 'Gold Purchase':
-            m = d.show_table('buy')   
+            m = d.show_table('buy')  
         elif req == 'Gold Sell':
             m = d.show_table('sell')
         elif req == 'Silver Purchase':
@@ -308,6 +314,8 @@ class Admin(QMainWindow):
             m = d.show_table('gst_gold')
         elif req == 'Silver GST':
             m = d.show_table('gst_silver')
+        field = m.fieldIndex('bill_no')
+        m.setSort(field,Qt.DescendingOrder) 
         t.setModel(m)
         t.setItemDelegate(center_item)
         self.stack_.addWidget(t)
@@ -435,10 +443,16 @@ class Admin(QMainWindow):
         pass
 
     def add_product_function(self):
-        pass
+        a_widget = Bill()
+        a_widget.d_btn.hide()
+        self.stack_.addWidget(a_widget)
+        self.stack_.setCurrentWidget(a_widget)
 
     def remove_product_function(self):
-        pass
+        r_widget = Bill()
+        r_widget.a_btn.hide()
+        self.stack_.addWidget(r_widget)
+        self.stack_.setCurrentWidget(r_widget)
 
     def close_win(self):
         sys.exit()
