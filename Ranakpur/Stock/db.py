@@ -190,12 +190,17 @@ class Db_Manager:
                                 token INTEGER PRIMARY KEY,
                                 name TEXT,
                                 item TEXT,
-                                weight NUMERIC(10,2),
                                 category TEXT,
-                                melting NUMERIC(10,2),
+                                weight NUMERIC(10,2),
+                                less NUMERIC(3,2),
+                                net NUMERIC(3,2),
+                                melting NUMERIC(3,2),
+                                wastage Numeric(3,2),
+                                hisab Numeric(3,2),
                                 classification TEXT,
                                 date TEXT,
-                                remark TEXT)""",
+                                remark TEXT,
+                                status TEXT)""",
                         "dhadi":"""CREATE TABLE IF NOT EXISTS dhadi(
                                 token INTEGER PRIMARY KEY,
                                 name TEXT,
@@ -658,12 +663,12 @@ class Db_Manager:
         firm = firm if firm !='' else '-'
         name = name or '-'
         address = address or '-'
-        contact = contact or '-'
+        contact = int(contact) or '-'
         gst = gst or '-'
         bank = bank or '-'
         branch = branch or '-'
         ifsc = ifsc or '-'
-        ac = ac or '-'
+        ac = int(ac) or '-'
         query.addBindValue(firm)
         query.addBindValue(name)
         query.addBindValue(address)

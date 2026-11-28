@@ -538,15 +538,15 @@ class Admin(QMainWindow):
         self.stack_.setCurrentWidget(self.frame8)
 
     def add_vyapari_detail(self):
-        a = self.f8.text()
-        b = self.n8.text()
-        c = self.a8.text()
-        d = self.c8.text()
-        e = self.g8.text()
-        f = self.b8.text()
-        g = self.b8_b.text()
-        h = self.ifsc8.text()
-        i = self.ac8.text()
+        a = self.f8.text().strip()
+        b = self.n8.text().strip()
+        c = self.a8.text().strip()
+        d = self.c8.text().strip()
+        e = self.g8.text().strip()
+        f = self.b8.text().strip()
+        g = self.b8_b.text().strip()
+        h = self.ifsc8.text().strip()
+        i = self.ac8.text().strip()
         j = self.cat8.currentText()
 
         if a == '' and b == '' and c == '' and d == '' and e == '' and f == '' and g == '' and h == '' and i == '':
@@ -570,39 +570,44 @@ class Admin(QMainWindow):
         self.cat8.setCurrentIndex(0)
 
     def add_lot_function(self):
-        pass
+        self.stack_.setCurrentWidget(self.frame9)
 
     def search_vyapari_function(self):
+        found=False
         self.temp_t.clearSelection()
         a = self.s7.currentText()
         if a == 'Name':
-            b = self.ss.text()
+            b = self.ss.text().strip().lower()
             if b == '':
                 self.validate_text("Enter value to search")
                 return
             else:
                 for r in range(self.m7.rowCount()):
-                    c = self.m7.index(r,1).data()
-                    if b == c:
+                    c = str(self.m7.index(r,1).data())
+                    c = c.lower()
+                    if b in c:
                         i = self.m7.index(r,0)
                         s_m = self.temp_t.selectionModel()
                         s_m.select(i,QItemSelectionModel.Select | QItemSelectionModel.Rows)
                         self.temp_t.scrollTo(i)
-                        return
+                        found=True
         else:
-            b = self.ss.text()
+            b = self.ss.text().strip().lower()
             if b == '':
                 self.validate_text("Enter value to search")
                 return
             else:
                 for r in range(self.m7.rowCount()):
-                    c = self.m7.index(r,0).data()
-                    if b == c:
+                    c = str(self.m7.index(r,0).data())
+                    c = c.lower()
+                    if b in c:
                         i = self.m7.index(r,0)
                         s_m = self.temp_t.selectionModel()
                         s_m.select(i,QItemSelectionModel.Select | QItemSelectionModel.Rows)
                         self.temp_t.scrollTo(i)
-                        return
+                        found=True
+        if found is False:
+            self.show_warning("Searched item is not in the list")
 
 
     def reset7_function(self):
@@ -619,6 +624,44 @@ class Admin(QMainWindow):
         self.ss_label.setText(a)
         self.ss_label.show()
         self.ss.show()
+
+    def update_hisab(self):
+        a = self.m9.text().strip()
+        b = self.wastage9.text().strip()
+        if a == '':
+            self.show_warning('Enter Melting section')
+            return
+        if b == '':
+            self.show_warning('Enter Wastage section')
+            return
+        a = float(a)
+        b = float(b)
+        self.h9.setText(str(a+b))
+
+    def update_netweight(self):
+        a = self.w9.text().strip()
+        b = self.l9.text().strip()
+        if a == '':
+            self.show_warning('Enter the Weight')
+            return
+        a = float(a)
+        b = float(b) if b else 0
+        self.net9.setText(str(a+b))
+
+    def a_lot_function(self):
+        pass
+
+    def update_lot_function(self):
+        pass
+
+    def delete_lot_function(self):
+        pass
+
+    def search_lot_function(self):
+        pass
+
+    def reset_lot_function(self):
+        pass
 
     #------------------------------------------Karagir functions---------------------------------------------
 
@@ -955,6 +998,125 @@ class Admin(QMainWindow):
         final8.addLayout(cat8_l)
         final8.addLayout(btn8_l)
         self.frame8.setLayout(final8)
+        t9_l = QHBoxLayout()
+        self.t9_label = QLabel('Token :')
+        self.t9 = QLineEdit()
+        self.t9.setReadOnly(True)
+        t9_l.addWidget(self.t9_label,stretch=30)
+        t9_l.addWidget(self.t9,stretch=70)
+        n9_l = QHBoxLayout()
+        self.n9_label = QLabel('Name :')
+        self.n9 = QLineEdit()
+        self.n9.setPlaceholderText('Enter firm or vyapari name')
+        n9_l.addWidget(self.n9_label,stretch=30)
+        n9_l.addWidget(self.n9,stretch=70)
+        i9_l = QHBoxLayout()
+        self.i9_label = QLabel('Item :')
+        self.i9 = QLineEdit()
+        i9_l.addWidget(self.i9_label,stretch=30)
+        i9_l.addWidget(self.i9,stretch=70)
+        cat9_l = QHBoxLayout()
+        self.cat9_label = QLabel('Category :')
+        self.cat9 = QComboBox()
+        self.cat9.addItems(['GOLD','SILVER'])
+        cat9_l.addWidget(self.cat9_label,stretch=30)
+        cat9_l.addWidget(self.cat9,stretch=70)
+        w9_l = QHBoxLayout()
+        self.w9_label = QLabel('Weight :')
+        self.w9 = QLineEdit()
+        w9_l.addWidget(self.w9_label,stretch=30)
+        w9_l.addWidget(self.w9,stretch=70)
+        l9_l = QHBoxLayout()
+        self.l9_label = QLabel('Less :')
+        self.l9 = QLineEdit()
+        self.l9.setPlaceholderText('Enter if less weight else considered 0')
+        self.l9.editingFinished.connect(self.update_netweight)
+        l9_l.addWidget(self.l9_label,stretch=30)
+        l9_l.addWidget(self.l9,stretch=70)
+        net9_l = QHBoxLayout()
+        self.net9_label = QLabel('Net Weight :')
+        self.net9 = QLineEdit()
+        net9_l.addWidget(self.net9_label,stretch=30)
+        net9_l.addWidget(self.net9,stretch=70)
+        m9_l = QHBoxLayout()
+        self.m9_label = QLabel('Melting :')
+        self.m9 = QLineEdit()
+        m9_l.addWidget(self.m9_label,stretch=30)
+        m9_l.addWidget(self.m9,stretch=70)
+        wastage9_l = QHBoxLayout()
+        self.wastage9_label = QLabel('Wastage :')
+        self.wastage9 = QLineEdit()
+        self.wastage9.editingFinished.connect(self.update_hisab)
+        wastage9_l.addWidget(self.wastage9_label,stretch=30)
+        wastage9_l.addWidget(self.wastage9,stretch=70)
+        h9_l = QHBoxLayout()
+        self.h9_label = QLabel('Hisab :')
+        self.h9 = QLineEdit()
+        h9_l.addWidget(self.h9_label,stretch=30)
+        h9_l.addWidget(self.h9,stretch=70)
+        clas9_l = QHBoxLayout()
+        self.clas9_label = QLabel('Classification :')
+        self.clas9 = QComboBox()
+        self.clas9.addItems(['Credit','Cash','Fine','Cash+Fine'])
+        clas9_l.addWidget(self.clas9_label,stretch=30)
+        clas9_l.addWidget(self.clas9,stretch=70)
+        d9_l = QHBoxLayout()
+        self.d9_label = QLabel('Date :')
+        self.d9 = QDateEdit()
+        self.d9.setCalendarPopup(True)
+        self.d9.setDisplayFormat('dd-MM-yyyy')
+        self.d9.setDate(self.temp_date)
+        d9_l.addWidget(self.d9_label,stretch=30)
+        d9_l.addWidget(self.d9,stretch=70)
+        remark9_l = QHBoxLayout()
+        self.r9_label = QLabel('Remark :')
+        self.r9 = QLineEdit()
+        self.r9.setPlaceholderText('Set about the transaction pattern eg. cash = 100 & fine = 10grams')
+        remark9_l.addWidget(self.r9_label,stretch=30)
+        remark9_l.addWidget(self.r9,stretch=70)
+        s9_l = QHBoxLayout()
+        self.s9_label = QLabel('Status :')
+        self.s9 = QComboBox()
+        self.s9.addItems(['Open','Close'])
+        s9_l.addWidget(self.s9_label,stretch=30)
+        s9_l.addWidget(self.s9,stretch=70)
+        btn9_l = QHBoxLayout()
+        self.add9 = QPushButton('ADD')
+        self.add9.clicked.connect(self.a_lot_function)
+        self.search9 = QPushButton('SEARCH')
+        self.search9.clicked.connect(self.search_lot_function)
+        self.delete9 = QPushButton('DELETE')
+        self.delete9.clicked.connect(self.delete_lot_function)
+        self.update9 = QPushButton('UPDATE')
+        self.update9.clicked.connect(self.update_lot_function)
+        self.reset9 = QPushButton('RESET')
+        self.reset9.clicked.connect(self.reset_lot_function)
+        btn9_l.addWidget(self.add9)
+        btn9_l.addWidget(self.search9)
+        btn9_l.addWidget(self.delete9)
+        btn9_l.addWidget(self.update9)
+        btn9_l.addWidget(self.reset9)
+        self.table9 = QTableView()
+        self.table9.horizontalHeader().sectionResizeMode(QHeaderView.Stretch)
+        self.table9.setItemDelegate(center_item)
+        final9 = QVBoxLayout() 
+        final9.addLayout(t9_l)
+        final9.addLayout(n9_l)
+        final9.addLayout(i9_l)
+        final9.addLayout(cat9_l)
+        final9.addLayout(w9_l)
+        final9.addLayout(l9_l)
+        final9.addLayout(net9_l)
+        final9.addLayout(m9_l)
+        final9.addLayout(wastage9_l)
+        final9.addLayout(h9_l)
+        final9.addLayout(clas9_l)
+        final9.addLayout(d9_l)
+        final9.addLayout(remark9_l)
+        final9.addLayout(s9_l)
+        final9.addLayout(btn9_l)
+        final9.addWidget(self.table9)
+        self.frame9.setLayout(final9)
         self.stack_.addWidget(self.frame1)
         self.stack_.addWidget(self.frame2)
         self.stack_.addWidget(self.frame3)
@@ -962,6 +1124,7 @@ class Admin(QMainWindow):
         self.stack_.addWidget(self.frame5)
         self.stack_.addWidget(self.frame6)
         self.stack_.addWidget(self.frame8)
+        self.stack_.addWidget(self.frame9)
         main_layout.addWidget(self.stack_)
         container_widget.setLayout(main_layout)
         self.setCentralWidget(container_widget)
