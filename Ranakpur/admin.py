@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (QApplication,
                              QDateEdit
                              )
 
-from PyQt5.QtCore import Qt ,QDate , pyqtSignal
+from PyQt5.QtCore import Qt ,QDate , pyqtSignal , QItemSelectionModel
 from PyQt5.QtGui import (QFont,
                          QStandardItemModel, 
                          QStandardItem,
@@ -81,6 +81,8 @@ class Admin(QMainWindow):
         update_menu = menu_bar.addMenu('&Update')
         add_menu = menu_bar.addMenu('&Add')
         remove_menu = menu_bar.addMenu('&Remove')
+        vyapari_menu = menu_bar.addMenu('&Vyapari')
+        karagir_menu = menu_bar.addMenu('&Karagir')
         exit_menu = menu_bar.addMenu('&Exit')
 
         # 3. Create clickable Actions for the 'File' menu
@@ -189,6 +191,40 @@ class Admin(QMainWindow):
         remove_p_d.triggered.connect(self.remove_product_function)
 
         remove_menu.addAction(remove_p_d)
+
+        enter_b_action = QAction('&Beneficiary',self)
+        enter_b_action.triggered.connect(self.vyapari_list_function)
+        add_b_action = QAction('&Add Beneficiary',self)
+        add_b_action.triggered.connect(self.add_vyapari_function)
+        lot_action = QAction('&Lot',self)
+        lot_action.triggered.connect(self.add_lot_function)
+
+        vyapari_menu.addAction(enter_b_action)
+        vyapari_menu.addSeparator()
+        vyapari_menu.addAction(add_b_action)
+        vyapari_menu.addSeparator()
+        vyapari_menu.addAction(lot_action)
+
+        enter_k_action = QAction('&Beneficiary',self)
+        enter_k_action.triggered.connect(self.karagir_list_function)
+        add_k_action = QAction('&Add Beneficiary',self)
+        add_k_action.triggered.connect(self.add_karagir_function)
+        dhadi_action = QAction('&Dhadi',self)
+        dhadi_action.triggered.connect(self.add_dhadi_function)
+        dhadi_status_action = QAction('&Dhadi Status',self)
+        dhadi_status_action.triggered.connect(self.status_function)
+        update_status_action = QAction('&Update Status',self)
+        update_status_action.triggered.connect(self.update_status_function)
+
+        karagir_menu.addAction(enter_k_action)
+        karagir_menu.addSeparator()
+        karagir_menu.addAction(add_k_action)
+        karagir_menu.addSeparator()
+        karagir_menu.addAction(dhadi_action)
+        karagir_menu.addSeparator()
+        karagir_menu.addAction(dhadi_status_action)
+        karagir_menu.addSeparator()
+        karagir_menu.addAction(update_status_action)
 
         exit_action = QAction('&Exit',self)
         exit_action.setShortcut('Ctrl+Q')
@@ -454,6 +490,153 @@ class Admin(QMainWindow):
         self.stack_.addWidget(r_widget)
         self.stack_.setCurrentWidget(r_widget)
 
+    #--------------------------------------Vyapari functions----------------------------------------------
+
+    def vyapari_list_function(self):
+        d = Detail()
+        self.m7 = QSqlTableModel()
+        self.temp_t = QTableView()
+        self.s7 = QComboBox()
+        self.s7.addItems(['','Name','Firm'])
+        self.s7.setEditable(True)
+        self.s7.currentTextChanged.connect(self.label_change)
+        self.s7_label = QLabel('Search by :')
+        s7_l = QHBoxLayout()
+        s7_l.addWidget(self.s7_label,stretch=30)
+        s7_l.addWidget(self.s7,stretch=70),
+        box_l = QHBoxLayout()
+        self.ss_label = QLabel('')
+        self.ss_label.hide()
+        self.ss = QLineEdit()
+        self.ss.hide()
+        box_l.addWidget(self.ss_label,stretch=30)
+        box_l.addWidget(self.ss,stretch=70)
+        btn_l =QHBoxLayout()
+        self.search7 = QPushButton('Search')
+        self.search7.clicked.connect(self.search_vyapari_function)
+        self.reset7 = QPushButton('Reset')
+        self.reset7.clicked.connect(self.reset7_function)
+        btn_l.addWidget(self.search7)
+        btn_l.addWidget(self.reset7)
+        final = QVBoxLayout()
+        final.addLayout(s7_l)
+        final.addLayout(box_l)
+        final.addLayout(btn_l)
+        self.temp_t.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        center = AlignedItem(Qt.AlignmentFlag.AlignCenter)
+        self.temp_t.setItemDelegate(center)
+        self.m7 = d.show_table('vyapari')
+        self.m7.select()
+        self.temp_t.setModel(self.m7)
+        final.addWidget(self.temp_t)
+        self.frame7.setLayout(final)
+        self.stack_.addWidget(self.frame7)
+        self.stack_.setCurrentWidget(self.frame7)
+
+    def add_vyapari_function(self):
+        self.reset_vyapari_detail()
+        self.stack_.setCurrentWidget(self.frame8)
+
+    def add_vyapari_detail(self):
+        a = self.f8.text()
+        b = self.n8.text()
+        c = self.a8.text()
+        d = self.c8.text()
+        e = self.g8.text()
+        f = self.b8.text()
+        g = self.b8_b.text()
+        h = self.ifsc8.text()
+        i = self.ac8.text()
+        j = self.cat8.currentText()
+
+        if a == '' and b == '' and c == '' and d == '' and e == '' and f == '' and g == '' and h == '' and i == '':
+            self.show_warning("Nothing to add")
+            return
+        else:
+            self.d.insert_into_vyapari(a,b,c,d,e,f,g,h,i,j)
+            self.success_msg("Vyapari")
+            self.reset_vyapari_detail()
+
+    def reset_vyapari_detail(self):
+        self.f8.clear()
+        self.n8.clear()
+        self.a8.clear()
+        self.c8.clear()
+        self.g8.clear()
+        self.b8.clear()
+        self.b8_b.clear()
+        self.ifsc8.clear()
+        self.ac8.clear()
+        self.cat8.setCurrentIndex(0)
+
+    def add_lot_function(self):
+        pass
+
+    def search_vyapari_function(self):
+        self.temp_t.clearSelection()
+        a = self.s7.currentText()
+        if a == 'Name':
+            b = self.ss.text()
+            if b == '':
+                self.validate_text("Enter value to search")
+                return
+            else:
+                for r in range(self.m7.rowCount()):
+                    c = self.m7.index(r,1).data()
+                    if b == c:
+                        i = self.m7.index(r,0)
+                        s_m = self.temp_t.selectionModel()
+                        s_m.select(i,QItemSelectionModel.Select | QItemSelectionModel.Rows)
+                        self.temp_t.scrollTo(i)
+                        return
+        else:
+            b = self.ss.text()
+            if b == '':
+                self.validate_text("Enter value to search")
+                return
+            else:
+                for r in range(self.m7.rowCount()):
+                    c = self.m7.index(r,0).data()
+                    if b == c:
+                        i = self.m7.index(r,0)
+                        s_m = self.temp_t.selectionModel()
+                        s_m.select(i,QItemSelectionModel.Select | QItemSelectionModel.Rows)
+                        self.temp_t.scrollTo(i)
+                        return
+
+
+    def reset7_function(self):
+        self.temp_t.clearSelection()
+        self.ss.clear()
+        self.ss.hide()
+        self.ss_label.hide()
+        self.s7.setCurrentIndex(0)
+
+    def label_change(self):
+        a = self.s7.currentText()
+        a = a if a else self.s7.setCurrentIndex(1)
+        a = self.s7.currentText()
+        self.ss_label.setText(a)
+        self.ss_label.show()
+        self.ss.show()
+
+    #------------------------------------------Karagir functions---------------------------------------------
+
+    def karagir_list_function(self):
+        pass
+
+    def add_karagir_function(self):
+        pass
+
+    def add_dhadi_function(self):
+        pass
+
+    def status_function(self):
+        pass
+
+    def update_status_function(self):
+        pass
+
     def close_win(self):
         sys.exit()
 
@@ -692,12 +875,93 @@ class Admin(QMainWindow):
         layout6.addLayout(button_layout_6)
         layout6.addLayout(r_l)
         self.frame6.setLayout(layout6)
+        for i in range(7, 16):  # Generates numbers 7 through 15
+            frame = QFrame()
+            frame.setFrameStyle(QFrame.Panel | QFrame.Plain)
+            frame.setLineWidth(2)
+            # Assigns the configured QFrame to self.frame7, self.frame8, ..., self.frame15
+            setattr(self, f"frame{i}", frame)
+        f8_l = QHBoxLayout()
+        self.f8_label = QLabel('Firm :')
+        self.f8 = QLineEdit()
+        self.f8.setPlaceholderText("Enter the name of firm if exists")
+        f8_l.addWidget(self.f8_label,stretch=30)
+        f8_l.addWidget(self.f8,stretch=70)
+        n8_l = QHBoxLayout()
+        self.n8_label = QLabel('Name :')
+        self.n8 = QLineEdit()
+        self.n8.setPlaceholderText("Enter name of dealer of firm")
+        n8_l.addWidget(self.n8_label,stretch=30)
+        n8_l.addWidget(self.n8,stretch=70)
+        a8_l = QHBoxLayout()
+        self.a8_label = QLabel('Address :')
+        self.a8 = QLineEdit()
+        a8_l.addWidget(self.a8_label,stretch=30)
+        a8_l.addWidget(self.a8,stretch=70)
+        c8_l = QHBoxLayout()
+        self.c8_label = QLabel('Contact :')
+        self.c8 = QLineEdit()
+        c8_l.addWidget(self.c8_label,stretch=30)
+        c8_l.addWidget(self.c8,stretch=70)
+        g8_l = QHBoxLayout()
+        self.g8_label = QLabel('GST :')
+        self.g8 = QLineEdit()
+        g8_l.addWidget(self.g8_label,stretch=30)
+        g8_l.addWidget(self.g8,stretch=70)
+        b8_l = QHBoxLayout()
+        self.b8_label = QLabel('Bank Name :')
+        self.b8 = QLineEdit()
+        b8_l.addWidget(self.b8_label,stretch=30)
+        b8_l.addWidget(self.b8,stretch=70)
+        b8_b_l = QHBoxLayout()
+        self.b8_b_label = QLabel('Branch :')
+        self.b8_b = QLineEdit()
+        b8_b_l.addWidget(self.b8_b_label,stretch=30)
+        b8_b_l.addWidget(self.b8_b,stretch=70)
+        ifsc8_l = QHBoxLayout()
+        self.ifsc8_label = QLabel('IFSC code :')
+        self.ifsc8 = QLineEdit()
+        ifsc8_l.addWidget(self.ifsc8_label,stretch=30)
+        ifsc8_l.addWidget(self.ifsc8,stretch=70)
+        ac8_l = QHBoxLayout()
+        self.ac8_label = QLabel('A/C no. :')
+        self.ac8 = QLineEdit()
+        self.ac8.setPlaceholderText('Enter Account number')
+        ac8_l.addWidget(self.ac8_label,stretch=30)
+        ac8_l.addWidget(self.ac8,stretch=70)
+        cat8_l = QHBoxLayout()
+        self.cat8_label = QLabel('Category :')
+        self.cat8 = QComboBox()
+        self.cat8.addItems(['GOLD','SILVER'])
+        cat8_l.addWidget(self.cat8_label,stretch=30)
+        cat8_l.addWidget(self.cat8,stretch=70)
+        btn8_l = QHBoxLayout()
+        self.add_btn8 = QPushButton('ADD')
+        self.add_btn8.clicked.connect(self.add_vyapari_detail)
+        self.reset_btn8 = QPushButton('RESET')
+        self.reset_btn8.clicked.connect(self.reset_vyapari_detail)
+        btn8_l.addWidget(self.add_btn8)
+        btn8_l.addWidget(self.reset_btn8)
+        final8 = QVBoxLayout()
+        final8.addLayout(f8_l)
+        final8.addLayout(n8_l)
+        final8.addLayout(a8_l)
+        final8.addLayout(c8_l)
+        final8.addLayout(g8_l)
+        final8.addLayout(b8_l)
+        final8.addLayout(b8_b_l)
+        final8.addLayout(ifsc8_l)
+        final8.addLayout(ac8_l)
+        final8.addLayout(cat8_l)
+        final8.addLayout(btn8_l)
+        self.frame8.setLayout(final8)
         self.stack_.addWidget(self.frame1)
         self.stack_.addWidget(self.frame2)
         self.stack_.addWidget(self.frame3)
         self.stack_.addWidget(self.frame4)
         self.stack_.addWidget(self.frame5)
         self.stack_.addWidget(self.frame6)
+        self.stack_.addWidget(self.frame8)
         main_layout.addWidget(self.stack_)
         container_widget.setLayout(main_layout)
         self.setCentralWidget(container_widget)

@@ -77,5 +77,7 @@
     "S_Bill_No": 914,
     "G_Bill_No_N": 1,
     "S_Bill_No_N": 3,
-    "G_Bill_N0_N": 2
+    "G_Bill_N0_N": 2,
+    "Lot_Token" : 1,
+    "Dhadi_Token" : 1
 }

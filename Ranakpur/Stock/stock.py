@@ -394,6 +394,7 @@ class Detail(QMainWindow):
         self.sell_silver_detail = QSqlTableModel()
         self.gst_gold = QSqlTableModel()
         self.gst_silver = QSqlTableModel()
+        self.vyapari = QSqlTableModel()
         self.buy.setTable('buy')
         a = self.buy.fieldIndex('bill_no')
         self.buy.setSort(a,Qt.DescendingOrder)
@@ -424,6 +425,8 @@ class Detail(QMainWindow):
         self.gst_silver.setTable('gst_silver')
         j = self.gst_silver.fieldIndex('bill_no')
         self.gst_silver.setSort(j,Qt.DescendingOrder)
+        self.vyapari.setTable('vyapari')
+        self.vyapari.setSort(0,Qt.DescendingOrder)
         self.stack_ = QStackedWidget()
         layout = QVBoxLayout()
         layout.addWidget(self.table)
@@ -464,6 +467,9 @@ class Detail(QMainWindow):
         elif table_name == 'gst_silver':
             self.gst_silver.select()
             return self.gst_silver
+        elif table_name == 'vyapari':
+            self.vyapari.select()
+            return self.vyapari
         else:
             return
 

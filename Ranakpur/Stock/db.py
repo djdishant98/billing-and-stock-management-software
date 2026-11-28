@@ -20,6 +20,10 @@ class Db_Manager:
             #cls._instance.select_table('buy_silver')
             #cls._instance.select_table('buy_silver_detail')
             #cls._instance.select_table('sell_silver')
+            #cls._instance.select_table('vyapari')
+            #cls._instance.select_table('karagir')
+            #cls._instance.select_table('lot')
+            #cls._instance.select_table('dhadi')
             #cls._instance.delete_table('sell')
             #cls._instance.delete_table('sell_detail')
             #cls._instance.delete_table('buy')
@@ -159,7 +163,52 @@ class Db_Manager:
                                 sgst NUMERIC(10,3),
                                 cgst NUMERIC(10,3),
                                 gst NUMERIC(10,3),
-                                date TEXT)"""
+                                date TEXT)""",
+                'vyapari_list':"""CREATE TABLE IF NOT EXISTS vyapari(
+                                firm TEXT,
+                                name TEXT,
+                                address TEXT,
+                                contact INTEGER,
+                                gst TEXT,
+                                bname TEXT,
+                                branch TEXT,
+                                ifsc TEXT,
+                                account INTEGER,
+                                category TEXT)""",
+                'karagir_list':"""CREATE TABLE IF NOT EXISTS karagir(
+                                firm TEXT,
+                                name TEXT,
+                                address TEXT,
+                                contact INTEGER,
+                                gst TEXT,
+                                bname TEXT,
+                                branch TEXT,
+                                ifsc TEXT,
+                                account INTEGER,
+                                category TEXT)""",
+                        'lot':"""CREATE TABLE IF NOT EXISTS lot(
+                                token INTEGER PRIMARY KEY,
+                                name TEXT,
+                                item TEXT,
+                                weight NUMERIC(10,2),
+                                category TEXT,
+                                melting NUMERIC(10,2),
+                                classification TEXT,
+                                date TEXT,
+                                remark TEXT)""",
+                        "dhadi":"""CREATE TABLE IF NOT EXISTS dhadi(
+                                token INTEGER PRIMARY KEY,
+                                name TEXT,
+                                item TEXT,
+                                weight NUMERIC(10,2),
+                                category TEXT,
+                                melting NUMERIC(10,2),
+                                classification TEXT,
+                                entry_weight NUMERIC(10,2),
+                                issue_date TEXT,
+                                entry_date TEXT,
+                                status TEXT,
+                                remark TEXT)"""
                                 }
         for key , value in query_dict.items():
             if not query.exec_(value):
@@ -598,6 +647,37 @@ class Db_Manager:
             print("GST of silver Updated")
         else:
             print("Failed to update silver gst")
+
+#---------------------------------insertion into Vyapari-----------------------------------------------
+
+    def insert_into_vyapari(self,firm,name,address,contact,gst,bank,branch,ifsc,ac,category):
+        query = QSqlQuery()
+        data = """INSERT INTO vyapari(firm,name,address,contact,gst,bname,branch,ifsc,account,category)
+                    VALUES(?,?,?,?,?,?,?,?,?,?)"""
+        query.prepare(data)
+        firm = firm if firm !='' else '-'
+        name = name or '-'
+        address = address or '-'
+        contact = contact or '-'
+        gst = gst or '-'
+        bank = bank or '-'
+        branch = branch or '-'
+        ifsc = ifsc or '-'
+        ac = ac or '-'
+        query.addBindValue(firm)
+        query.addBindValue(name)
+        query.addBindValue(address)
+        query.addBindValue(contact)
+        query.addBindValue(gst)
+        query.addBindValue(bank)
+        query.addBindValue(branch)
+        query.addBindValue(ifsc)
+        query.addBindValue(ac)
+        query.addBindValue(category)
+        if query.exec_():
+            print("Vyapari added as beneficiary")
+        else:
+            print("Unsuccessful vyapari operation")
     
 #--------------------------------DISPLAYING TABLES----------------------------------------------
 
